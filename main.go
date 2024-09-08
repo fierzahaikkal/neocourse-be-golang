@@ -5,8 +5,10 @@ import (
 	"net/http"
 
 	"github.com/fierzahaikkal/neocourse-be-golang/api/v1/auth"
+	"github.com/fierzahaikkal/neocourse-be-golang/api/v1/books"
 	"github.com/fierzahaikkal/neocourse-be-golang/configs"
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/repository"
+	"github.com/fierzahaikkal/neocourse-be-golang/pkg/middleware"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -16,17 +18,22 @@ import (
 func main() {
 	config := configs.LoadConfig()
 
-	// Koneksi database
+	// Database connection
 	db, err := gorm.Open(postgres.Open(config.DBUrl), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	userRepo := repository.UserRepository{DB: db}
-	authHandler := auth.AuthHandler{UserRepo: userRepo, JWTSecret: config.JWTSecret}
+	// Initialize repositories and use cases
+	userRepo := repository.NewUserRepository(db)
+	bookRepo := repository.NewBookRepository(db)
+	authHandler := auth.NewAuthHandler(userRepo, config.JWTSecret)
+	bookHandler := books.NewBookHandler(bookRepo)
 
-	http.Handle("/api/v1/auth/signup", http.HandlerFunc(authHandler.Signup))
-	http.Handle("/api/v1/auth/signin", http.HandlerFunc(authHandler.Signin))
+	// Setup routes
+	http.Handle("/api/v1/auth/", authHandler)
+	http.Handle("/api/v1/books/", bookHandler)
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	// Apply middlewares
+	http.ListenAndServe(":8080", middleware.RecoveryMiddleware(http.DefaultServeMux))
 }

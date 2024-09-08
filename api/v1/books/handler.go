@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/fierzahaikkal/neocourse-be-golang/internal/domain"
+	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/usecase"
 	"github.com/gorilla/mux"
 )
@@ -23,7 +23,7 @@ func NewBookHandler(bookUseCase usecase.BookUseCase) *BookHandler {
 
 // StoreBookHandler handles storing a new book
 func (h *BookHandler) StoreBookHandler(w http.ResponseWriter, r *http.Request) {
-	var book domain.Book
+	var book entity.Book
 	if err := json.NewDecoder(r.Body).Decode(&book); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
@@ -41,7 +41,7 @@ func (h *BookHandler) StoreBookHandler(w http.ResponseWriter, r *http.Request) {
 
 // BorrowBookHandler handles borrowing a book
 func (h *BookHandler) BorrowBookHandler(w http.ResponseWriter, r *http.Request) {
-	var borrowRequest domain.BorrowRequest
+	var borrowRequest entity.BorrowRequest
 	if err := json.NewDecoder(r.Body).Decode(&borrowRequest); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
@@ -97,7 +97,7 @@ func (h *BookHandler) UpdateBookHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var book domain.Book
+	var book entity.Book
 	if err := json.NewDecoder(r.Body).Decode(&book); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return

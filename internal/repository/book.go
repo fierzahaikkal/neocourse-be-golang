@@ -3,7 +3,7 @@ package repository
 import (
 	"errors"
 
-	"github.com/fierzahaikkal/neocourse-be-golang/internal/domain"
+	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
 	"gorm.io/gorm"
 )
 
@@ -11,17 +11,17 @@ type BookRepository struct {
 	DB *gorm.DB
 }
 
-func NewBookRepository(db *gorm.DB) domain.BookRepository {
+func NewBookRepository(db *gorm.DB) entity.BookRepository {
 	return &BookRepository{DB: db}
 }
 
-func (repo *BookRepository) CreateBook(book *domain.Book) error {
+func (repo *BookRepository) CreateBook(book *entity.Book) error {
 	return repo.DB.Create(book).Error
 }
 
-func (repo *BookRepository) BorrowBook(borrowRequest *domain.BorrowRequest) error {
+func (repo *BookRepository) BorrowBook(borrowRequest *entity.BorrowRequest) error {
 	return repo.DB.Transaction(func(tx *gorm.DB) error {
-		var book domain.Book
+		var book entity.Book
 		if err := tx.First(&book, borrowRequest.BookID).Error; err != nil {
 			return err
 		}
@@ -42,22 +42,22 @@ func (repo *BookRepository) BorrowBook(borrowRequest *domain.BorrowRequest) erro
 	})
 }
 
-func (repo *BookRepository) GetAllBooks() ([]*domain.Book, error) {
-	var books []*domain.Book
+func (repo *BookRepository) GetAllBooks() ([]*entity.Book, error) {
+	var books []*entity.Book
 	err := repo.DB.Find(&books).Error
 	return books, err
 }
 
-func (repo *BookRepository) FindBookByID(id int) (*domain.Book, error) {
-	var book domain.Book
+func (repo *BookRepository) FindBookByID(id int) (*entity.Book, error) {
+	var book entity.Book
 	err := repo.DB.First(&book, id).Error
 	return &book, err
 }
 
-func (repo *BookRepository) UpdateBook(id int, book *domain.Book) error {
+func (repo *BookRepository) UpdateBook(id int, book *entity.Book) error {
 	return repo.DB.Model(&book).Where("id = ?", id).Updates(book).Error
 }
 
 func (repo *BookRepository) DeleteBook(id int) error {
-	return repo.DB.Delete(&domain.Book{}, id).Error
+	return repo.DB.Delete(&entity.Book{}, id).Error
 }

@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/domain"
-	"github.com/fierzahaikkal/neocourse-be-golang/internal/interfaces"
 	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils"
+	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils/validator"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -24,7 +24,7 @@ func NewAuthHandler(userRepo domain.UserRepository, jwtSecret string) *AuthHandl
 }
 
 func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
-	var req interfaces.SignUpRequest
+	var req validator.SignUpRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		utils.ErrorResponse(w, "Invalid request body", http.StatusBadRequest)
@@ -58,7 +58,7 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
-	var req interfaces.SignUpRequest
+	var req validator.SignUpRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		utils.ErrorResponse(w, "Invalid request body", http.StatusBadRequest)

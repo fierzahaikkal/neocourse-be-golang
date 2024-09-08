@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"github.com/fierzahaikkal/neocourse-be-golang/internal/domain"
+	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
 	"gorm.io/gorm"
 )
 
@@ -9,6 +9,6 @@ type UserRepository struct {
 	DB *gorm.DB
 }
 
-func (r *UserRepository) CreateUser(user *domain.User) error {
+func (r *UserRepository) CreateUser(user *entity.User) error {
 	return r.DB.Create(user).Error
 }
