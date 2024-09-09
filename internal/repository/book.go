@@ -1,9 +1,8 @@
 package repository
 
 import (
-	"errors"
-
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
+	bookModel "github.com/fierzahaikkal/neocourse-be-golang/internal/model/book"
 	"gorm.io/gorm"
 )
 
@@ -11,7 +10,7 @@ type BookRepository struct {
 	DB *gorm.DB
 }
 
-func NewBookRepository(db *gorm.DB) entity.BookRepository {
+func NewBookRepository(db *gorm.DB) *BookRepository {
 	return &BookRepository{DB: db}
 }
 
@@ -19,27 +18,8 @@ func (repo *BookRepository) CreateBook(book *entity.Book) error {
 	return repo.DB.Create(book).Error
 }
 
-func (repo *BookRepository) BorrowBook(borrowRequest *entity.BorrowRequest) error {
-	return repo.DB.Transaction(func(tx *gorm.DB) error {
-		var book entity.Book
-		if err := tx.First(&book, borrowRequest.BookID).Error; err != nil {
-			return err
-		}
-
-		// Check if the book is available
-		if book.AvailableCopies <= 0 {
-			return errors.New("no copies available")
-		}
-
-		// Update book availability
-		book.AvailableCopies--
-		if err := tx.Save(&book).Error; err != nil {
-			return err
-		}
-
-		// Record the borrowing transaction
-		return tx.Create(&borrowRequest).Error
-	})
+func (repo *BookRepository) BorrowBook(borrowRequest *bookModel.BookRequest) error {
+	return nil
 }
 
 func (repo *BookRepository) GetAllBooks() ([]*entity.Book, error) {

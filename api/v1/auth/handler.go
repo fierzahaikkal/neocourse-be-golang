@@ -5,18 +5,18 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/fierzahaikkal/neocourse-be-golang/internal/domain"
+	"github.com/fierzahaikkal/neocourse-be-golang/internal/repository"
+	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
 	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils"
-	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils/validator"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthHandler struct {
-	UserRepo  domain.UserRepository
+	UserRepo  *repository.UserRepository
 	JWTSecret string
 }
 
-func NewAuthHandler(userRepo domain.UserRepository, jwtSecret string) *AuthHandler {
+func NewAuthHandler(userRepo *repository.UserRepository, jwtSecret string) *AuthHandler {
 	return &AuthHandler{
 		UserRepo:  userRepo,
 		JWTSecret: jwtSecret,
@@ -24,7 +24,7 @@ func NewAuthHandler(userRepo domain.UserRepository, jwtSecret string) *AuthHandl
 }
 
 func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
-	var req validator.SignUpRequest
+	var req utils.SignUpRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		utils.ErrorResponse(w, "Invalid request body", http.StatusBadRequest)
@@ -43,7 +43,7 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := domain.User{
+	user := entity.User{
 		Email:    req.Email,
 		Password: string(hashedPassword),
 	}
@@ -58,7 +58,7 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
-	var req validator.SignUpRequest
+	var req utils.SignUpRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		utils.ErrorResponse(w, "Invalid request body", http.StatusBadRequest)
