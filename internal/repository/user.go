@@ -12,3 +12,9 @@ type UserRepository struct {
 func (r *UserRepository) CreateUser(user *entity.User) error {
 	return r.DB.Create(user).Error
 }
+
+func (r *UserRepository) FindByEmail(email string) (*entity.User, error) {
+	var user entity.User
+	err := r.DB.First(&user, "email = ?", email).Error
+	return &user, err
+}

@@ -2,13 +2,15 @@ package usecase
 
 import (
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
+	bookModel "github.com/fierzahaikkal/neocourse-be-golang/internal/model/book"
+	"github.com/fierzahaikkal/neocourse-be-golang/internal/repository"
 )
 
 type BookUseCase struct {
-	BookRepo entity.BookRepository
+	BookRepo *repository.BookRepository
 }
 
-func NewBookUseCase(bookRepo entity.BookRepository) *BookUseCase {
+func NewBookUseCase(bookRepo *repository.BookRepository) *BookUseCase {
 	return &BookUseCase{
 		BookRepo: bookRepo,
 	}
@@ -18,7 +20,7 @@ func (uc *BookUseCase) StoreBook(book *entity.Book) error {
 	return uc.BookRepo.CreateBook(book)
 }
 
-func (uc *BookUseCase) BorrowBook(borrowRequest *entity.BorrowRequest) error {
+func (uc *BookUseCase) BorrowBook(borrowRequest *bookModel.BookRequest) error {
 	return uc.BookRepo.BorrowBook(borrowRequest)
 }
 

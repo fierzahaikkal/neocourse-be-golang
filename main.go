@@ -1,19 +1,19 @@
 package main
 
 import (
-	"log"
 	"net/http"
 
-	"github.com/fierzahaikkal/neocourse-be-golang/api/v1/auth"
+	// "github.com/fierzahaikkal/neocourse-be-golang/api/v1/auth"
 	"github.com/fierzahaikkal/neocourse-be-golang/api/v1/books"
 	"github.com/fierzahaikkal/neocourse-be-golang/configs"
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/repository"
+	"github.com/fierzahaikkal/neocourse-be-golang/internal/usecase"
 	"github.com/fierzahaikkal/neocourse-be-golang/pkg/middleware"
+	log "github.com/sirupsen/logrus"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
-
-//TODO: terdapat kesalahan dalam domain dan repository book dan user harap cek lagi!
 
 func main() {
 	config := configs.LoadConfig()
@@ -24,16 +24,29 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	// Initialize repositories and use cases
-	userRepo := repository.NewUserRepository(db)
+	// repositories
 	bookRepo := repository.NewBookRepository(db)
-	authHandler := auth.NewAuthHandler(userRepo, config.JWTSecret)
-	bookHandler := books.NewBookHandler(bookRepo)
+
+	// usecases
+	bookUseCase := usecase.NewBookUseCase(bookRepo)
+
+	// handlers
+	bookHandler := books.NewBookHandler(bookUseCase)
 
 	// Setup routes
-	http.Handle("/api/v1/auth/", authHandler)
-	http.Handle("/api/v1/books/", bookHandler)
+	// http.Handle("/api/v1/auth/", authHandler)
+	http.Handle("/api/v1/books", middleware.AuthMiddleware(config.JWTSecret)(bookHandler))
+
+	// Serve the Swagger UI at the /swagger endpoint
+	http.Handle("/swagger/", httpSwagger.Handler(
+		httpSwagger.URL("/api/api-spec.yml"), // The path to the OpenAPI YAML file with a leading "/"
+	))
+	// Serve the Swagger YAML file correctly with leading "/"
+	http.Handle("/api/", http.StripPrefix("/api/", http.FileServer(http.Dir("./api"))))
 
 	// Apply middlewares
-	http.ListenAndServe(":8080", middleware.RecoveryMiddleware(http.DefaultServeMux))
+	log.Info("Server started on http://localhost:8080")
+	if err := http.ListenAndServe(":8080", middleware.RecoveryMiddleware(http.DefaultServeMux)); err != nil {
+		log.Fatalf("Error starting server: %v", err)
+	}
 }

@@ -7,17 +7,29 @@ import (
 	"strconv"
 
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
+	bookModel "github.com/fierzahaikkal/neocourse-be-golang/internal/model/book"
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/usecase"
 	"github.com/gorilla/mux"
 )
 
 type BookHandler struct {
-	BookUseCase usecase.BookUseCase
+	BookUseCase *usecase.BookUseCase
 }
 
-func NewBookHandler(bookUseCase usecase.BookUseCase) *BookHandler {
+func NewBookHandler(bookUseCase *usecase.BookUseCase) *BookHandler {
 	return &BookHandler{
 		BookUseCase: bookUseCase,
+	}
+}
+
+func (h *BookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		h.Test(w, r) // Handle the GET request
+	case http.MethodPost:
+		h.GetAllBooksHandler(w, r) // Handle the POST request
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
@@ -41,7 +53,7 @@ func (h *BookHandler) StoreBookHandler(w http.ResponseWriter, r *http.Request) {
 
 // BorrowBookHandler handles borrowing a book
 func (h *BookHandler) BorrowBookHandler(w http.ResponseWriter, r *http.Request) {
-	var borrowRequest entity.BorrowRequest
+	var borrowRequest bookModel.BookRequest
 	if err := json.NewDecoder(r.Body).Decode(&borrowRequest); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
@@ -130,4 +142,8 @@ func (h *BookHandler) DeleteBookHandler(w http.ResponseWriter, r *http.Request) 
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Book deleted successfully"))
+}
+
+func (h *BookHandler) Test(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Hello, world!"))
 }
