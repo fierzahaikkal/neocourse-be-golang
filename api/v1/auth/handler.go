@@ -2,91 +2,92 @@ package auth
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
-	"github.com/fierzahaikkal/neocourse-be-golang/internal/repository"
-	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
+	"github.com/fierzahaikkal/neocourse-be-golang/internal/model/user"
+	"github.com/fierzahaikkal/neocourse-be-golang/internal/usecase"
 	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils"
-	"golang.org/x/crypto/bcrypt"
+	log "github.com/sirupsen/logrus"
 )
 
 type AuthHandler struct {
-	UserRepo  *repository.UserRepository
-	JWTSecret string
+	AuthUseCase *usecase.AuthUseCase
+	JWTSecret   string
+	log         *log.Logger
 }
 
-func NewAuthHandler(userRepo *repository.UserRepository, jwtSecret string) *AuthHandler {
+func NewAuthHandler(authUseCase *usecase.AuthUseCase, jwtSecret string) *AuthHandler {
 	return &AuthHandler{
-		UserRepo:  userRepo,
-		JWTSecret: jwtSecret,
+		AuthUseCase: authUseCase,
+		JWTSecret:   jwtSecret,
+		log:         log.New(),
+	}
+}
+
+func (h *AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "OPTIONS, GET, POST, PUT")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-CSRF-Token")
+
+	switch r.URL.Path {
+	case "/api/v1/auth/signup":
+		if r.Method == http.MethodPost {
+			h.SignUp(w, r) // Handle the POST request for SignUp
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	case "/api/v1/auth/signin":
+		if r.Method == http.MethodPost {
+			h.SignIn(w, r) // Handle the POST request for SignIn
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	default:
+		http.NotFound(w, r)
 	}
 }
 
 func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
-	var req utils.SignUpRequest
+	var req user.SignUpRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		utils.ErrorResponse(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	if err := req.Validate(); err != nil {
+	if err := utils.Validate.Struct(&req); err != nil {
 		utils.ErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	token, err := h.AuthUseCase.SignUp(req, h.JWTSecret)
+
+	statusCode, err := utils.HandleError(err)
 	if err != nil {
-		log.Printf("Error hashing password: %v", err)
-		utils.ErrorResponse(w, "Server error", http.StatusInternalServerError)
+		utils.ErrorResponse(w, err.Error(), statusCode)
 		return
 	}
-
-	user := entity.User{
-		Email:    req.Email,
-		Password: string(hashedPassword),
-	}
-
-	err = h.UserRepo.CreateUser(&user)
-	if err != nil {
-		utils.ErrorResponse(w, "User already exists", http.StatusConflict)
-		return
-	}
-
-	utils.SuccessResponse(w, "User created successfully")
+	utils.SuccessResponse(w, map[string]interface{}{"message": "User created successfully", "token": token}, statusCode)
 }
 
 func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
-	var req utils.SignUpRequest
+	var req user.SignInRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		utils.ErrorResponse(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	if err := req.Validate(); err != nil {
+	if err := utils.Validate.Struct(&req); err != nil {
 		utils.ErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	user, err := h.UserRepo.FindByEmail(req.Email)
+	token, err := h.AuthUseCase.SignIn(req, h.JWTSecret)
+	statusCode, err := utils.HandleError(err)
 	if err != nil {
-		utils.ErrorResponse(w, "Invalid email or password", http.StatusUnauthorized)
+		utils.ErrorResponse(w, err.Error(), statusCode)
 		return
 	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
-	if err != nil {
-		utils.ErrorResponse(w, "Invalid email or password", http.StatusUnauthorized)
-		return
-	}
-
-	token, err := utils.GenerateJWT(user, h.JWTSecret)
-	if err != nil {
-		utils.ErrorResponse(w, "Failed to generate token", http.StatusInternalServerError)
-		return
-	}
-
-	utils.SuccessResponse(w, map[string]string{"token": token})
+	utils.SuccessResponse(w, map[string]interface{}{"message": "User logged in successfully", "token": token}, http.StatusOK)
 }
