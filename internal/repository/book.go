@@ -28,16 +28,16 @@ func (repo *BookRepository) GetAllBooks() ([]*entity.Book, error) {
 	return books, err
 }
 
-func (repo *BookRepository) FindBookByID(id int) (*entity.Book, error) {
+func (repo *BookRepository) FindBookByID(id string) (*entity.Book, error) {
 	var book entity.Book
 	err := repo.DB.First(&book, id).Error
 	return &book, err
 }
 
-func (repo *BookRepository) UpdateBook(id int, book *entity.Book) error {
+func (repo *BookRepository) UpdateBook(id string, book *entity.Book) error {
 	return repo.DB.Model(&book).Where("id = ?", id).Updates(book).Error
 }
 
-func (repo *BookRepository) DeleteBook(id int) error {
+func (repo *BookRepository) DeleteBook(id string) error {
 	return repo.DB.Delete(&entity.Book{}, id).Error
 }
