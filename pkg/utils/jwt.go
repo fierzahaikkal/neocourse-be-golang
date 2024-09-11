@@ -12,7 +12,7 @@ import (
 func GenerateJWT(user *entity.User, secret string) (string, error) {
 	claims := jwt.MapClaims{
 		"email": user.Email,
-		"exp":   time.Now().Add(time.Hour * 72).Unix(), // Token expiration time
+		"exp":   time.Now().Add(time.Hour * 4).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

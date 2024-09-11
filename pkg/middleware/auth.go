@@ -11,7 +11,8 @@ import (
 func AuthMiddleware(jwtSecret string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			tokenString := r.Header.Get("Authorization")
+			bearerToken := r.Header.Get("Authorization")
+			tokenString := bearerToken[7:] // get token string from "Bearer <token>"
 			if tokenString == "" {
 				utils.ErrorResponse(w, "Missing token", http.StatusUnauthorized)
 				return
