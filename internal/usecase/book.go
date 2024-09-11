@@ -9,10 +9,10 @@ import (
 )
 
 type BookUseCase struct {
-	BookRepo repository.BookRepository
+	BookRepo *repository.BookRepository
 }
 
-func NewBookUseCase(bookRepo repository.BookRepository) *BookUseCase {
+func NewBookUseCase(bookRepo *repository.BookRepository) *BookUseCase {
 	return &BookUseCase{
 		BookRepo: bookRepo,
 	}
