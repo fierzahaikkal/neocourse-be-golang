@@ -4,10 +4,9 @@ package books
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
-	bookModel "github.com/fierzahaikkal/neocourse-be-golang/internal/model/book"
+	borrowModel "github.com/fierzahaikkal/neocourse-be-golang/internal/model/borrow"
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/usecase"
 	"github.com/gorilla/mux"
 )
@@ -53,7 +52,7 @@ func (h *BookHandler) StoreBookHandler(w http.ResponseWriter, r *http.Request) {
 
 // BorrowBookHandler handles borrowing a book
 func (h *BookHandler) BorrowBookHandler(w http.ResponseWriter, r *http.Request) {
-	var borrowRequest bookModel.BookRequest
+	var borrowRequest borrowModel.BorrowRequest
 	if err := json.NewDecoder(r.Body).Decode(&borrowRequest); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
@@ -84,11 +83,11 @@ func (h *BookHandler) GetAllBooksHandler(w http.ResponseWriter, r *http.Request)
 // GetBookByIDHandler handles fetching a specific book by ID
 func (h *BookHandler) GetBookByIDHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		http.Error(w, "Invalid book ID", http.StatusBadRequest)
-		return
-	}
+	id := vars["id"]
+	// if err != nil {
+	// 	http.Error(w, "Invalid book ID", http.StatusBadRequest)
+	// 	return
+	// }
 
 	book, err := h.BookUseCase.FindBookByID(id)
 	if err != nil {
@@ -103,8 +102,8 @@ func (h *BookHandler) GetBookByIDHandler(w http.ResponseWriter, r *http.Request)
 // UpdateBookHandler handles updating a specific book
 func (h *BookHandler) UpdateBookHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	id, exists := vars["id"]
+	if !exists || id == "" {
 		http.Error(w, "Invalid book ID", http.StatusBadRequest)
 		return
 	}
@@ -115,7 +114,7 @@ func (h *BookHandler) UpdateBookHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = h.BookUseCase.UpdateBook(id, &book)
+	err := h.BookUseCase.UpdateBook(id, &book)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -125,16 +124,13 @@ func (h *BookHandler) UpdateBookHandler(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(book)
 }
 
+
 // DeleteBookHandler handles deleting a specific book
 func (h *BookHandler) DeleteBookHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		http.Error(w, "Invalid book ID", http.StatusBadRequest)
-		return
-	}
+	id := vars["id"] // Use id directly as a string
 
-	err = h.BookUseCase.DeleteBook(id)
+	err := h.BookUseCase.DeleteBook(id) // Make sure DeleteBook accepts a string
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
