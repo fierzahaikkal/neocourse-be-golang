@@ -1,20 +1,26 @@
 package middleware
 
 import (
+	"fmt"
 	"log"
-	"net/http"
 
 	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils"
+	"github.com/gofiber/fiber/v2"
 )
 
-func RecoveryMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func RecoveryMiddleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
 		defer func() {
-			if err := recover(); err != nil {
+			if r := recover(); r != nil {
+				err, ok := r.(error)
+				if !ok {
+					err = fmt.Errorf("%v", r)
+				}
 				log.Printf("Recovered from panic: %v", err)
-				utils.ErrorResponse(w, "Internal Server Error", http.StatusInternalServerError)
+				_ = utils.ErrorResponse(c, "Internal Server Error", fiber.StatusInternalServerError)
 			}
 		}()
-		next.ServeHTTP(w, r)
-	})
+
+		return c.Next()
+	}
 }

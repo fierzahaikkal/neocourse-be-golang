@@ -34,8 +34,8 @@ func (repo *BookRepository) FindBookByID(id string) (*entity.Book, error) {
 	return &book, err
 }
 
-func (repo *BookRepository) UpdateBook(id string, book *entity.Book) error {
-	return repo.DB.Model(&book).Where("id = ?", id).Updates(book).Error
+func (repo *BookRepository) UpdateBook(book *entity.Book) error {
+	return repo.DB.Model(&book).Where("id = ?", book.ID).Updates(book).Error
 }
 
 func (repo *BookRepository) DeleteBook(id string) error {

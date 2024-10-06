@@ -1,7 +1,7 @@
 package entity
 
 type Book struct {
-	ID          string `gorm:"primaryKey"`
+	ID          string `gorm:"type:uuid;primaryKey"`
 	Author      string `gorm:"size:50;not null"`
 	Title       string `gorm:"size:30;not null"`
 	Description string `gorm:"type:text;size:100"`

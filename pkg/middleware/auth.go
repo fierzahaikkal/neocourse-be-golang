@@ -2,32 +2,38 @@
 package middleware
 
 import (
-	"net/http"
+	"strings"
 
 	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils"
+	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
 )
 
-func AuthMiddleware(jwtSecret string) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			bearerToken := r.Header.Get("Authorization")
-			tokenString := bearerToken[7:] // get token string from "Bearer <token>"
-			if tokenString == "" {
-				utils.ErrorResponse(w, "Missing token", http.StatusUnauthorized)
-				return
-			}
+func AuthMiddleware(jwtSecret string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		bearerToken := c.Get("Authorization")
+		if bearerToken == "" {
+			return utils.ErrorResponse(c, "Missing token", fiber.StatusUnauthorized)
+		}
 
-			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-				return []byte(jwtSecret), nil
-			})
+		tokenParts := strings.Split(bearerToken, " ")
+		if len(tokenParts) != 2 || strings.ToLower(tokenParts[0]) != "bearer" {
+			return utils.ErrorResponse(c, "Invalid token format", fiber.StatusUnauthorized)
+		}
 
-			if err != nil || !token.Valid {
-				utils.ErrorResponse(w, "Invalid token", http.StatusUnauthorized)
-				return
-			}
+		tokenString := tokenParts[1]
 
-			next.ServeHTTP(w, r)
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			return []byte(jwtSecret), nil
 		})
+
+		if err != nil || !token.Valid {
+			return utils.ErrorResponse(c, "Invalid token", fiber.StatusUnauthorized)
+		}
+
+		// If you need to pass the token claims to the next handler, you can do:
+		// c.Locals("user", token.Claims)
+
+		return c.Next()
 	}
 }
