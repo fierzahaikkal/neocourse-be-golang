@@ -57,7 +57,7 @@ func (uc *BookUseCase) BorrowBook(c *fiber.Ctx) error {
 // GetAllBooks returns all available books
 func (uc *BookUseCase) GetAllBooks(c *fiber.Ctx) error {
 	book, err := uc.BookRepo.GetAllBooks()
-	if err != nil{
+	if err != nil {
 		return utils.ErrorResponse(c, err.Error(), fiber.StatusNotFound)
 	}
 	return utils.SuccessResponse(c, book, fiber.StatusOK)
@@ -68,7 +68,7 @@ func (uc *BookUseCase) FindBookByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
 	book, err := uc.BookRepo.FindBookByID(id)
-	if err != nil{
+	if err != nil {
 		return utils.ErrorResponse(c, err.Error(), fiber.StatusNotFound)
 	}
 
@@ -78,7 +78,7 @@ func (uc *BookUseCase) FindBookByID(c *fiber.Ctx) error {
 // UpdateBook updates an existing book by ID
 func (uc *BookUseCase) UpdateBook(c *fiber.Ctx) error {
 	id := c.Params("id")
-	
+
 	book, err := uc.BookRepo.FindBookByID(id)
 	if err != nil {
 		return utils.ErrorResponse(c, err.Error(), fiber.StatusNotFound)
@@ -96,7 +96,7 @@ func (uc *BookUseCase) UpdateBook(c *fiber.Ctx) error {
 // DeleteBook deletes a book by ID
 func (uc *BookUseCase) DeleteBook(c *fiber.Ctx) error {
 	id := c.Params("id")
-	if err := uc.BookRepo.DeleteBook(id); err != nil{
+	if err := uc.BookRepo.DeleteBook(id); err != nil {
 		return utils.ErrorResponse(c, err.Error(), fiber.StatusInternalServerError)
 	}
 	return utils.SuccessResponse(c, nil, fiber.StatusNoContent)

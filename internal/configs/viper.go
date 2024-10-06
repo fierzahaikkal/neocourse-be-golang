@@ -13,6 +13,7 @@ type Config struct {
 	DBPassword string
 	DBName     string
 	DBPort     string
+	DBSSLMode  string
 }
 
 func LoadConfig() *Config {
@@ -29,5 +30,6 @@ func LoadConfig() *Config {
 		DBPassword: viper.GetString("DB_PASSWORD"),
 		DBName:     viper.GetString("DB_NAME"),
 		DBPort:     viper.GetString("DB_PORT"),
+		DBSSLMode:  viper.GetString("DB_SSL_Mode"),
 	}
 }
