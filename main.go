@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/fierzahaikkal/neocourse-be-golang/db"
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/configs"
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/repository"
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/usecase"
@@ -19,7 +20,12 @@ func main() {
 	logger := utils.NewLogger()
 
 	// Database connection
-	db := configs.InitDB(config)
+	dbConn := configs.InitDB(config)
+
+	// Run migrations
+	if err := db.Migrate(dbConn); err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
 
 	// apply fiber
 	app := fiber.New()
@@ -29,17 +35,18 @@ func main() {
 
 	// will be available at /api/v1/docs
 	app.Use(swagger.New(swagger.Config{
-		BasePath: "/api/v1/",
-		FilePath: "api-spec.json",
-		Path: "docs",
+		BasePath: "/",
+		FilePath: "./api/v1/api-spec.json",
+		Path:     "docs",
+		Title:    "Swagger API Docs",
 	}))
 
 	//apply recover middleware
 	app.Use(recover.New())
 
 	// repositories
-	bookRepo := repository.NewBookRepository(db)
-	userRepo := repository.NewUserRepository(db, logger)
+	bookRepo := repository.NewBookRepository(dbConn)
+	userRepo := repository.NewUserRepository(dbConn, logger)
 
 	// usecases
 	bookUseCase := usecase.NewBookUseCase(bookRepo)
@@ -49,11 +56,11 @@ func main() {
 	// auth
 	app.Post("/api/v1/auth/signup", authUseCase.SignUp(config.JWTSecret))
 	app.Post("/api/v1/auth/signin", authUseCase.SignIn(config.JWTSecret))
-	
+
 	// books
-    app.Get("/api/v1/books", 
-        middleware.AuthMiddleware(config.JWTSecret),
-        bookUseCase.GetAllBooks)
+	app.Get("/api/v1/books",
+		middleware.AuthMiddleware(config.JWTSecret),
+		bookUseCase.GetAllBooks)
 	app.Post("/api/v1/books", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.StoreBook)
 	app.Get("/api/v1/books/:id", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.FindBookByID)
 	app.Patch("/api/v1/books/:id", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.UpdateBook)
