@@ -1,13 +1,10 @@
 package borrow
 
-type BorrowResponse struct{
-	ID string `json:"id"`
-	BorrowedBy string `json:"borrowed_by"`
-	BorrowedAt string `json:"borrowed_at"`
-}
-
-type BorrowRequest struct{
-	ID string `json:"id"`
-	BorrowedBy string `json:"borrowed_by"`
-	BorrowedAt string `json:"borrowed_at"`
+type BorrowRequest struct {
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Author      string `json:"author"`
+	Description string `json:"description"`
+	Genre		string `json:"genre"`
+	BorrowedBy 	string   `json:"borrowedBy"`
 }

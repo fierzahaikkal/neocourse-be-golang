@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
+	bookModel "github.com/fierzahaikkal/neocourse-be-golang/internal/model/book"
 	borrowModel "github.com/fierzahaikkal/neocourse-be-golang/internal/model/borrow"
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/repository"
 	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils"
@@ -50,6 +51,19 @@ func (uc *BookUseCase) BorrowBook(c *fiber.Ctx) error {
 
 	book.IsBorrowed = true
 	book.BorrowedBy = borrowRequest.BorrowedBy
+	uc.BookRepo.UpdateBook(book)
+	return utils.SuccessResponse(c, book, fiber.StatusAccepted)
+}
+
+// ReturnBook handles the logic to returning a borrowed book
+func (uc *BookUseCase) ReturnBook(c *fiber.Ctx) error{
+	var ReturnRequest bookModel.BookReturnRequest
+	book, err := uc.BookRepo.FindBookByID(ReturnRequest.ID)
+	if err != nil {
+		return utils.ErrorResponse(c, err.Error(), fiber.StatusNotFound)
+	}
+
+	book.IsBorrowed = false
 	uc.BookRepo.UpdateBook(book)
 	return utils.SuccessResponse(c, book, fiber.StatusAccepted)
 }

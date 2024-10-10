@@ -62,9 +62,9 @@ func main() {
 		middleware.AuthMiddleware(config.JWTSecret),
 		bookUseCase.GetAllBooks)
 	app.Post("/api/v1/books", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.StoreBook)
-	app.Get("/api/v1/books/:id", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.FindBookByID)
-	app.Patch("/api/v1/books/:id", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.UpdateBook)
-	app.Delete("/api/v1/books/:id", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.DeleteBook)
+	app.Get("/api/v1/book/:id", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.FindBookByID)
+	app.Patch("/api/v1/book/:id", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.UpdateBook)
+	app.Delete("/api/v1/book/:id", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.DeleteBook)
 	app.Get("/api/v1/books/borrow/:id", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.BorrowBook)
 
 	// Listen Server

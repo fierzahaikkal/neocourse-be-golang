@@ -10,6 +10,7 @@ type Book struct {
 	IsBorrowed  bool   `gorm:"not null;default:false"`
 	Genre       string `gorm:"size:20"`
 	BorrowedBy  string `gorm:"column:borrowed_by"`
+	ImageURI	string `gorm:"column:image_uri"`
 	CreatedAt   int64  `gorm:"column:created_at;autoCreateTime:milli"`
 	UpdatedAt   int64  `gorm:"column:updated_at;autoCreateTime:milli;autoUpdateTime:milli"`
 
