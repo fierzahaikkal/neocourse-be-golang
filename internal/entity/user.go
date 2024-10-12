@@ -1,7 +1,7 @@
 package entity
 
 type User struct {
-	ID       string `gorm:"primaryKey;column:id"`
+	ID       string `gorm:"primaryKey;column:id;type:uuid"`
 	Username string `gorm:"size:20;not null;unique"`
 	Email    string `gorm:"size:40;not null;unique"`
 	Password string `gorm:"not null"`

@@ -2,7 +2,7 @@ package repository
 
 import (
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
-	bookModel "github.com/fierzahaikkal/neocourse-be-golang/internal/model/book"
+	borrowModel "github.com/fierzahaikkal/neocourse-be-golang/internal/model/borrow"
 	"gorm.io/gorm"
 )
 
@@ -18,8 +18,14 @@ func (repo *BookRepository) CreateBook(book *entity.Book) error {
 	return repo.DB.Create(book).Error
 }
 
-func (repo *BookRepository) BorrowBook(borrowRequest *bookModel.BookRequest) error {
-	return nil
+func (repo *BookRepository) BorrowBook(borrowRequest *borrowModel.BorrowRequest) error {
+	var book entity.Book
+	err := repo.DB.First(&book, borrowRequest).Error
+	return err
+}
+
+func (r *BookRepository) CreateBorrow(borrow *entity.Borrow) error {
+    return r.DB.Create(borrow).Error
 }
 
 func (repo *BookRepository) GetAllBooks() ([]*entity.Book, error) {
@@ -34,8 +40,8 @@ func (repo *BookRepository) FindBookByID(id string) (*entity.Book, error) {
 	return &book, err
 }
 
-func (repo *BookRepository) UpdateBook(id string, book *entity.Book) error {
-	return repo.DB.Model(&book).Where("id = ?", id).Updates(book).Error
+func (repo *BookRepository) UpdateBook(book *entity.Book) error {
+	return repo.DB.Model(&book).Where("id = ?", book.ID).Updates(book).Error
 }
 
 func (repo *BookRepository) DeleteBook(id string) error {

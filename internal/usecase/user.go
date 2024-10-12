@@ -4,6 +4,7 @@ import (
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/repository"
 	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils"
+	"github.com/gofiber/fiber/v2"
 
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/model/user"
 	log "github.com/sirupsen/logrus"
@@ -19,60 +20,82 @@ func NewAuthUseCase(userRepo *repository.UserRepository, log *log.Logger) *AuthU
 	return &AuthUseCase{UserRepo: userRepo, log: log}
 }
 
-func (uc *AuthUseCase) SignUp(req user.SignUpRequest, jwtSecret string) (string, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	if err != nil {
-		log.Printf("Error hashing password: %v", err)
-		return "", err
-	}
+func (uc *AuthUseCase) SignUp(jwtSecret string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var req user.SignUpRequest
 
-	user := entity.User{
-		ID:       utils.GenUUID(),
-		Email:    req.Email,
-		Password: string(hashedPassword),
-		Username: req.Username,
-		Name:     req.Name,
-	}
-
-	if err := uc.UserRepo.Register(&user); err != nil {
-		return "", err
-	}
-
-	// generate token
-	token, err := utils.GenerateJWT(&user, jwtSecret)
-	if err != nil {
-		if err == utils.ErrUserExists {
-			return "", utils.ErrUserExists
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
-		return "", err
-	}
 
-	return token, nil
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+
+		user := entity.User{
+			ID: utils.GenUUID(),
+			Username: req.Username,
+			Email:    req.Email,
+			Name:     req.Name,
+			Password: string(hashedPassword),
+		}
+
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to hash password"})
+		}
+
+		if err := uc.UserRepo.Register(&user); err != nil {
+			if err == utils.ErrUserExists {
+				return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "User already exists"})
+			}
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to register user"})
+		}
+
+		token, err := utils.GenerateJWT(&user, jwtSecret)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to generate token"})
+		}
+
+		return c.Status(fiber.StatusCreated).JSON(fiber.Map{"token": token})
+	}
 }
 
-func (uc *AuthUseCase) SignIn(req user.SignInRequest, jwtSecret string) (string, error) {
-	var user entity.User
-	userFromDb, err := uc.UserRepo.FindByEmail(req.Email, &user)
+func (uc *AuthUseCase) SignIn(jwtSecret string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var req user.SignInRequest
 
-	if err != nil {
-		if err == utils.ErrRecordNotFound {
-			return "", utils.ErrRecordNotFound
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid request body",
+			})
 		}
-		return "", err
-	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(userFromDb.Password), []byte(req.Password))
-	if err != nil {
-		return "", utils.ErrInvalidCredentials
-	}
-
-	token, err := utils.GenerateJWT(&user, jwtSecret)
-	if err != nil {
-		if err == utils.ErrUserExists {
-			return "", utils.ErrUserExists
+		var user entity.User
+		userFromDb, err := uc.UserRepo.FindByEmail(req.Email, &user)
+		if err != nil {
+			if err == utils.ErrRecordNotFound {
+				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+					"error": "Invalid credentials",
+				})
+			}
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "An error occurred while processing your request",
+			})
 		}
-		return "", err
-	}
 
-	return token, nil
+		if err := bcrypt.CompareHashAndPassword([]byte(userFromDb.Password), []byte(req.Password)); err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Invalid credentials",
+			})
+		}
+
+		token, err := utils.GenerateJWT(&user, jwtSecret)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to generate token",
+			})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"token": token,
+		})
+	}
 }

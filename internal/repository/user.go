@@ -44,6 +44,14 @@ func (r *UserRepository) Register(user *entity.User) error {
 	return nil
 }
 
+func (r *UserRepository) FindByID(id string) (*entity.User, error) {
+    var user entity.User
+    if err := r.DB.First(&user, "id = ?", id).Error; err != nil {
+        return nil, err
+    }
+    return &user, nil
+}
+
 func (r *UserRepository) FindByEmail(email string, user *entity.User) (*entity.User, error) {
 	err := r.DB.First(&user, "email = ?", email).Error
 	return user, err

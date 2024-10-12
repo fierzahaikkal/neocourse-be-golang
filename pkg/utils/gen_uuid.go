@@ -5,5 +5,5 @@ import (
 )
 
 func GenUUID() string {
-	return uuid.New().String()
+	return uuid.NewString()
 }
