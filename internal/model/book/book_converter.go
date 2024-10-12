@@ -8,7 +8,7 @@ func BookMapper(book *entity.Book) *BookResponse {
 		Title:     		book.Title,
 		Author:    		book.Author,
 		Description: 	book.Description,
-		Available: 		book.IsBorrowed,
+		Available: 		book.Available,
 		Genre: 			book.Genre,
 		ImageURI:		book.ImageURI,
 	}

@@ -11,6 +11,7 @@ import (
 
 type BookUseCase struct {
 	BookRepo *repository.BookRepository
+	UserRepo *repository.UserRepository
 }
 
 func NewBookUseCase(bookRepo *repository.BookRepository) *BookUseCase {
@@ -20,21 +21,65 @@ func NewBookUseCase(bookRepo *repository.BookRepository) *BookUseCase {
 }
 
 // StoreBook handles the logic to add a new book
-func (uc *BookUseCase) StoreBook(c *fiber.Ctx) error {
-	var book entity.Book
+func (uc *BookUseCase) StoreBook(c *fiber.Ctx) (error) {
+	var req *bookModel.BookStoreRequest
 
-	if err := c.BodyParser(&book); err != nil {
+	if err := c.BodyParser(&req); err != nil {
 		return utils.ErrorResponse(c, err.Error(), fiber.StatusBadRequest)
 	}
-	book.ID = utils.GenUUID()
+	
+	// Validate StoredBy user
+	storedByUser, err := uc.UserRepo.FindByID(req.StoredBy)
+	if err != nil {
+		return utils.ErrorResponse(c, "Invalid StoredBy user", fiber.StatusBadRequest)
+	}
 
-	if err := uc.BookRepo.CreateBook(&book); err != nil {
-		return utils.ErrorResponse(c, err.Error(), fiber.StatusInternalServerError)
+	book := entity.Book{
+		ID: utils.GenUUID(),
+		Author: req.Author,
+		Title: req.Title,
+		Description: req.Description,
+		Year: req.Year,
+		StoredBy: storedByUser.ID,
+		Available: req.Available,
+		Genre: req.Genre,
+		BorrowedBy: &req.BorrowedBy,
+		ImageURI: req.ImageURI,
 	}
 
 	if book.Title == "" || book.Author == "" {
-		return utils.ErrorResponse(c, "Book title and author is required", fiber.StatusBadRequest)
+		return  utils.ErrorResponse(c, "Book title and author is required", fiber.StatusBadRequest)
 	}
+
+	// If BorrowedBy is provided, create a borrow record
+    if req.BorrowedBy != "" {
+        borrowedByUser, err := uc.UserRepo.FindByID(req.BorrowedBy)
+        if err != nil {
+            return utils.ErrorResponse(c, "Invalid BorrowedBy user", fiber.StatusBadRequest)
+        }
+
+        borrow := entity.Borrow{
+            ID:     utils.GenUUID(),
+            UserID: borrowedByUser.ID,
+            BookID: book.ID,
+        }
+
+        if err := uc.BookRepo.CreateBorrow(&borrow); err != nil {
+            return utils.ErrorResponse(c, err.Error(), fiber.StatusInternalServerError)
+        }
+
+        // Update book availability
+        book.Available = false
+        book.BorrowedBy = &borrowedByUser.ID
+        if err := uc.BookRepo.UpdateBook(&book); err != nil {
+            return utils.ErrorResponse(c, "err.Error()", fiber.StatusInternalServerError)
+        }
+    }
+	
+	if err := uc.BookRepo.CreateBook(&book); err != nil {
+		return utils.ErrorResponse(c, *book.BorrowedBy, fiber.StatusInternalServerError)
+	}
+
 	return utils.SuccessResponse(c, book, fiber.StatusCreated)
 }
 
@@ -45,12 +90,12 @@ func (uc *BookUseCase) BorrowBook(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.ErrorResponse(c, err.Error(), fiber.StatusNotFound)
 	}
-	if book.IsBorrowed {
+	if book.Available {
 		return utils.ErrorResponse(c, "Book is already borrowed", fiber.StatusConflict)
 	}
 
-	book.IsBorrowed = true
-	book.BorrowedBy = borrowRequest.BorrowedBy
+	book.Available = true
+	book.BorrowedBy = &borrowRequest.BorrowedBy
 	uc.BookRepo.UpdateBook(book)
 	return utils.SuccessResponse(c, book, fiber.StatusAccepted)
 }
@@ -63,7 +108,7 @@ func (uc *BookUseCase) ReturnBook(c *fiber.Ctx) error{
 		return utils.ErrorResponse(c, err.Error(), fiber.StatusNotFound)
 	}
 
-	book.IsBorrowed = false
+	book.Available = false
 	uc.BookRepo.UpdateBook(book)
 	return utils.SuccessResponse(c, book, fiber.StatusAccepted)
 }
@@ -98,7 +143,7 @@ func (uc *BookUseCase) UpdateBook(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, err.Error(), fiber.StatusNotFound)
 	}
 
-	if book.IsBorrowed {
+	if book.Available {
 		return utils.ErrorResponse(c, "Cannot Update Borrowed Book", fiber.StatusBadRequest)
 	}
 

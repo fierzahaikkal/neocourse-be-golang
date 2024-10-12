@@ -28,19 +28,19 @@ func (uc *AuthUseCase) SignUp(jwtSecret string) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+
 		user := entity.User{
+			ID: utils.GenUUID(),
 			Username: req.Username,
 			Email:    req.Email,
 			Name:     req.Name,
+			Password: string(hashedPassword),
 		}
 
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to hash password"})
 		}
-
-		user.ID = utils.GenUUID()
-		user.Password = string(hashedPassword)
 
 		if err := uc.UserRepo.Register(&user); err != nil {
 			if err == utils.ErrUserExists {

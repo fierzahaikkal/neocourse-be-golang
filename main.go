@@ -68,8 +68,8 @@ func main() {
 	app.Get("/api/v1/books/borrow/:id", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.BorrowBook)
 
 	// Listen Server
-	logger.Info("Server started on http://localhost:8080")
-	if err := app.Listen("localhost:8080"); err != nil {
+	logger.Info("Server started on http://localhost:8081")
+	if err := app.Listen("localhost:8081"); err != nil {
 		log.Fatalf("Error starting server: %v", err)
 	}
 }

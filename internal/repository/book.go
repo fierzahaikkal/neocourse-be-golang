@@ -24,6 +24,10 @@ func (repo *BookRepository) BorrowBook(borrowRequest *borrowModel.BorrowRequest)
 	return err
 }
 
+func (r *BookRepository) CreateBorrow(borrow *entity.Borrow) error {
+    return r.DB.Create(borrow).Error
+}
+
 func (repo *BookRepository) GetAllBooks() ([]*entity.Book, error) {
 	var books []*entity.Book
 	err := repo.DB.Find(&books).Error
