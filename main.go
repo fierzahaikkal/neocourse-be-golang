@@ -5,6 +5,7 @@ import (
 
 	"github.com/fierzahaikkal/neocourse-be-golang/db"
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/configs"
+	"github.com/fierzahaikkal/neocourse-be-golang/internal/handler"
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/repository"
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/usecase"
 	"github.com/fierzahaikkal/neocourse-be-golang/pkg/middleware"
@@ -19,21 +20,16 @@ func main() {
 	config := configs.LoadConfig()
 	logger := utils.NewLogger()
 
-	// Database connection
 	dbConn := configs.InitDB(config)
 
-	// Run migrations
 	if err := db.Migrate(dbConn); err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
-	// apply fiber
 	app := fiber.New()
 
-	//apply cors
 	app.Use(cors.New())
 
-	// will be available at /api/v1/docs
 	app.Use(swagger.New(swagger.Config{
 		BasePath: "/",
 		FilePath: "./api/v1/api-spec.json",
@@ -41,21 +37,23 @@ func main() {
 		Title:    "Swagger API Docs",
 	}))
 
-	//apply recover middleware
-	app.Use(recover.New())
+	app.Use(recover.New()) // recover panics
 
 	// repositories
 	bookRepo := repository.NewBookRepository(dbConn)
 	userRepo := repository.NewUserRepository(dbConn, logger)
 
 	// usecases
-	bookUseCase := usecase.NewBookUseCase(bookRepo)
+	bookUseCase := usecase.NewBookUseCase(bookRepo, userRepo)
 	authUseCase := usecase.NewAuthUseCase(userRepo, logger)
+
+	// handlers
+	authHandler := handler.NewAuthHandler(authUseCase, config.JWTSecret, logger)
 
 	// routes
 	// auth
-	app.Post("/api/v1/auth/signup", authUseCase.SignUp(config.JWTSecret))
-	app.Post("/api/v1/auth/signin", authUseCase.SignIn(config.JWTSecret))
+	app.Post("/api/v1/auth/signup", authHandler.SignUp)
+	app.Post("/api/v1/auth/signin", authHandler.SignIn)
 
 	// books
 	app.Get("/api/v1/books",

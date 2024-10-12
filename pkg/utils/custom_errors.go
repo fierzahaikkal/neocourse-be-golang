@@ -12,6 +12,10 @@ var (
 	ErrRecordNotFound      = errors.New("record not found")
 	ErrInternalServerError = errors.New("internal server error")
 	ErrInvalidCredentials  = errors.New("email or password is wrong")
+	ErrCannotUpdateBorrowedBook = errors.New("cannot update borrowed book")
+	ErrBookNotFound = errors.New("book not found")
+	ErrBookAlreadyBorrowed = errors.New("book is already borrowed")
+	ErrInvalidUser = errors.New("invalid user")
 )
 
 func HandleError(err error) (int, error) {

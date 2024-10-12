@@ -28,19 +28,19 @@ func (r *BookRepository) CreateBorrow(borrow *entity.Borrow) error {
     return r.DB.Create(borrow).Error
 }
 
-func (repo *BookRepository) GetAllBooks() ([]*entity.Book, error) {
-	var books []*entity.Book
+func (repo *BookRepository) GetAllBooks() ([]entity.Book, error) {
+	var books []entity.Book
 	err := repo.DB.Find(&books).Error
 	return books, err
 }
 
-func (repo *BookRepository) FindBookByID(id string) (*entity.Book, error) {
+func (repo *BookRepository) FindBookByID(id string) (entity.Book, error) {
 	var book entity.Book
 	err := repo.DB.First(&book, id).Error
-	return &book, err
+	return book, err
 }
 
-func (repo *BookRepository) UpdateBook(book *entity.Book) error {
+func (repo *BookRepository) UpdateBook(book entity.Book) error {
 	return repo.DB.Model(&book).Where("id = ?", book.ID).Updates(book).Error
 }
 
