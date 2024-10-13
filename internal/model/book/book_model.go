@@ -1,25 +1,21 @@
 package book
 
-type BookResponse struct {
-	ID          string `json:"id"`
-	Title       string `json:"title"`
-	Author      string `json:"author"`
-	Description string `json:"description"`
-	Genre		string `json:"genre"`
-	Available 	bool   `json:"available"`
-	ImageURI	string `json:"image_uri"`
-}
-
 type BookStoreRequest struct{
 	Title       string `json:"title"`
 	Author      string `json:"author"`
 	Description string `json:"description"`
 	Genre		string `json:"genre"`
-	Available 	bool   `json:"available"`
 	ImageURI	string `json:"image_uri"`
-	Year        int    `json:"not null"`
-	StoredBy    string `json:"stored_by"`
-	BorrowedBy  string `json:"borrowed_by"`
+	Year        int    `json:"year"`
+}
+
+type UpdateRequest struct {
+	Author      *string `json:"author"`
+	Title       *string `json:"title"`
+	Description *string `json:"description"`
+	Year        *int    `json:"year"`
+	Genre       *string `json:"genre"`
+	ImageURI    *string `json:"image_uri"`
 }
 
 type BookReturnRequest struct{

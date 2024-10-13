@@ -44,13 +44,22 @@ func (r *UserRepository) Register(user *entity.User) error {
 	return nil
 }
 
-func (r *UserRepository) FindByID(id string) (*entity.User, error) {
+func (r *UserRepository) FindByID(id string, user *entity.User) (*entity.User, error) {
+    err := r.DB.First(&user, "id = ?", id).Error
+    return user, err
+}
+
+func (r *UserRepository) FindByIDTx(tx *gorm.DB, id string) (*entity.User, error) {
     var user entity.User
-    if err := r.DB.First(&user, "id = ?", id).Error; err != nil {
+    if err := tx.First(&user, "id = ?", id).Error; err != nil {
+        if err == gorm.ErrRecordNotFound {
+            return nil, nil
+        }
         return nil, err
     }
     return &user, nil
 }
+
 
 func (r *UserRepository) FindByEmail(email string, user *entity.User) (*entity.User, error) {
 	err := r.DB.First(&user, "email = ?", email).Error
