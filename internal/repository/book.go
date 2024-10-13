@@ -29,8 +29,8 @@ func (r *BookRepository) CreateBorrow(borrow *entity.Borrow) error {
     return r.DB.Create(borrow).Error
 }
 
-func (repo *BookRepository) GetAllBooks() ([]entity.Book, error) {
-	var books []entity.Book
+func (repo *BookRepository) GetAllBooks() ([]*entity.Book, error) {
+	var books []*entity.Book
 	err := repo.DB.Find(&books).Error
 	return books, err
 }
@@ -63,7 +63,7 @@ func (r *BookRepository) CreateBorrowTx(tx *gorm.DB, borrow *entity.Borrow) erro
     return tx.Create(borrow).Error
 }
 
-func (repo *BookRepository) UpdateBook(book entity.Book) error {
+func (repo *BookRepository) UpdateBook(book *entity.Book) error {
 	return repo.DB.Model(&book).Where("id = ?", book.ID).Updates(book).Error
 }
 

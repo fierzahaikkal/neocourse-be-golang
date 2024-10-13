@@ -44,7 +44,7 @@ func main() {
 	userRepo := repository.NewUserRepository(dbConn, logger)
 
 	// usecases
-	bookUseCase := usecase.NewBookUseCase(bookRepo, userRepo)
+	bookUseCase := usecase.NewBookUseCase(bookRepo)
 	authUseCase := usecase.NewAuthUseCase(userRepo, logger)
 
 	// handlers
@@ -63,7 +63,7 @@ func main() {
 	app.Get("/api/v1/book/:id", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.FindBookByID)
 	app.Patch("/api/v1/book/:id", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.UpdateBook)
 	app.Delete("/api/v1/book/:id", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.DeleteBook)
-	app.Post("/api/v1/book/borrow/:id", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.BorrowBook)
+	// app.Post("/api/v1/book/borrow/:id", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.BorrowBook)
 
 	// Listen Server
 	logger.Info("Server started on http://localhost:8081")
