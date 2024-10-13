@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
 	borrowModel "github.com/fierzahaikkal/neocourse-be-golang/internal/model/borrow"
+	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils"
 	"gorm.io/gorm"
 )
 
@@ -19,8 +20,8 @@ func (repo *BookRepository) CreateBook(book *entity.Book) error {
 }
 
 func (repo *BookRepository) BorrowBook(borrowRequest *borrowModel.BorrowRequest) error {
-	var book entity.Book
-	err := repo.DB.First(&book, borrowRequest).Error
+	var borrow entity.Borrow
+	err := repo.DB.First(&borrow, borrowRequest).Error
 	return err
 }
 
@@ -34,10 +35,32 @@ func (repo *BookRepository) GetAllBooks() ([]entity.Book, error) {
 	return books, err
 }
 
-func (repo *BookRepository) FindBookByID(id string) (entity.Book, error) {
-	var book entity.Book
-	err := repo.DB.First(&book, id).Error
-	return book, err
+func (repo *BookRepository) FindBookByID(id string) (*entity.Book, error) {
+    var book entity.Book
+    err := repo.DB.Where("id = ?", id).First(&book).Error
+    if err != nil {
+        if gorm.ErrRecordNotFound != nil {
+            return nil, utils.ErrRecordNotFound
+        }
+        return nil, err
+    }
+    return &book, nil
+}
+
+func (r *BookRepository) FindBookByIDTx(tx *gorm.DB, id string) (*entity.Book, error) {
+    var book entity.Book
+    if err := tx.First(&book, "id = ?", id).Error; err != nil {
+        return nil, err
+    }
+    return &book, nil
+}
+
+func (r *BookRepository) UpdateBookTx(tx *gorm.DB, book *entity.Book) error {
+    return tx.Save(book).Error
+}
+
+func (r *BookRepository) CreateBorrowTx(tx *gorm.DB, borrow *entity.Borrow) error {
+    return tx.Create(borrow).Error
 }
 
 func (repo *BookRepository) UpdateBook(book entity.Book) error {
@@ -45,5 +68,14 @@ func (repo *BookRepository) UpdateBook(book entity.Book) error {
 }
 
 func (repo *BookRepository) DeleteBook(id string) error {
-	return repo.DB.Delete(&entity.Book{}, id).Error
+	result := repo.DB.Where("id = ?", id).Delete(&entity.Book{})
+    if result.Error != nil {
+        return result.Error
+    }
+
+    if result.RowsAffected == 0 {
+        return utils.ErrRecordNotFound
+    }
+
+    return nil
 }
