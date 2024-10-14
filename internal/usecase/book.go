@@ -3,8 +3,7 @@ package usecase
 import (
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
 	bookModel "github.com/fierzahaikkal/neocourse-be-golang/internal/model/book"
-
-	// borrowModel "github.com/fierzahaikkal/neocourse-be-golang/internal/model/borrow"
+	borrowModel "github.com/fierzahaikkal/neocourse-be-golang/internal/model/borrow"
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/repository"
 	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils"
 	"github.com/gofiber/fiber/v2"
@@ -38,14 +37,6 @@ func (uc *BookUseCase) StoreBook(c *fiber.Ctx) (error) {
 
 	// Validate StoredBy user
 	var user entity.User
-	// storedByUser, err := uc.UserRepo.FindByID(req.StoredBy, &user)
-	// if err != nil {
-	// 	return utils.ErrorResponse(c, "Database error while fetching user", fiber.StatusInternalServerError)
-	// }
-	// if storedByUser == nil {
-	// 	return utils.ErrorResponse(c, "StoredBy user not found", fiber.StatusBadRequest)
-	// }
-
 	book := entity.Book{
 		ID:          utils.GenUUID(),
 		Author:      req.Author,
@@ -80,32 +71,45 @@ func (uc *BookUseCase) StoreBook(c *fiber.Ctx) (error) {
 }
 
 // // BorrowBook handles the logic to borrow a book
-// func (uc *BookUseCase) BorrowBook(c *fiber.Ctx) error {
-// 	id := c.Params("id")
+func (uc *BookUseCase) BorrowBook(c *fiber.Ctx) error {
+	id := c.Params("bookID")
 
-// 	var req borrowModel.BorrowRequest
-// 		// // Find the book
-// 		// book, err := uc.BookRepo.FindBookByID(id)
-// 		// if err != nil {
-// 		// 	return err
-// 		// }
+	var req borrowModel.BorrowRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return utils.ErrorResponse(c, "Invalid request", fiber.StatusBadRequest)
+	}
+	// Find the book
+	book, err := uc.BookRepo.FindBookByID(id)
+	if err != nil {
+		return err
+	}
+
+	// Check if the book is available
+	if !book.Available {
+		return utils.ErrorResponse(c, "Book not found", fiber.StatusNotFound)
+	}
+
+	// Update the book's status
+	book.Available = false
+	book.BorrowedBy = &req.BorrowedBy
+
+	if err := uc.BookRepo.UpdateBook(book); err != nil {
+		return err
+	}
+
+	// Create a new borrow record
+	borrow := &entity.Borrow{
+		ID:         utils.GenUUID(),
+		UserID:     req.BorrowedBy,
+		BookID:     id,
+	}
+
+	if err := uc.BookRepo.CreateBorrow(borrow); err != nil {
+		return err
+	}
 	
-// 		// // Check if the book is available
-// 		// if !book.Available {
-// 		// 	return utils.ErrorResponse(c, err.Error(), fiber.StatusNotFound)
-// 		// }
-	
-// 		// // Update the book's status
-// 		// book.Available = false
-// 		// book.BorrowedBy = &req.BorrowedBy
-	
-// 		// // Create a new borrow record
-// 		// borrow := &entity.Borrow{
-// 		// 	ID:         utils.GenUUID(),
-// 		// 	UserID:     req.BorrowedBy,
-// 		// 	BookID:     id,
-// 		// }
-	
+	return utils.SuccessResponse(c, borrow, fiber.StatusOK)
 // 		// // Use a transaction to ensure both operations succeed or fail together
 // 		// err = uc.BookRepo.DB.Transaction(func(tx *gorm.DB) error {
 // 		// 	if err := tx.Save(book).Error; err != nil {
@@ -215,20 +219,19 @@ func (uc *BookUseCase) StoreBook(c *fiber.Ctx) (error) {
 // 	// 	return utils.ErrorResponse(c, "Error creating borrow record", fiber.StatusInternalServerError)
 // 	// }
 // 	return utils.SuccessResponse(c, book, fiber.StatusAccepted)
-// }
+}
 
 // // ReturnBook handles the logic to returning a borrowed book
-// func (uc *BookUseCase) ReturnBook(c *fiber.Ctx) error{
-// 	var ReturnRequest bookModel.BookReturnRequest
-// 	book, err := uc.BookRepo.FindBookByID(ReturnRequest.ID)
-// 	if err != nil {
-// 		return utils.ErrorResponse(c, err.Error(), fiber.StatusNotFound)
-// 	}
-
-// 	book.Available = false
-// 	uc.BookRepo.UpdateBook(book)
-// 	return utils.SuccessResponse(c, book, fiber.StatusAccepted)
-// }
+func (uc *BookUseCase) ReturnBook(c *fiber.Ctx) error{
+	id := c.Params("borrowID")
+	if err := uc.BookRepo.ReturnBook(id); err != nil {
+		if err == utils.ErrRecordNotFound{
+			return utils.ErrorResponse(c, err.Error(), fiber.StatusNotFound)
+		}
+		return utils.ErrorResponse(c, err.Error(), fiber.StatusInternalServerError)
+	}
+	return utils.SuccessResponse(c, "Success deleted", fiber.StatusNoContent)
+}
 
 // GetAllBooks returns all available books
 func (uc *BookUseCase) GetAllBooks(c *fiber.Ctx) error {
@@ -241,7 +244,7 @@ func (uc *BookUseCase) GetAllBooks(c *fiber.Ctx) error {
 
 // FindBookByID returns a specific book by ID
 func (uc *BookUseCase) FindBookByID(c *fiber.Ctx) error {
-	id := c.Params("id")
+	id := c.Params("bookID")
 
 	book, err := uc.BookRepo.FindBookByID(id)
 	if err != nil {
@@ -253,7 +256,7 @@ func (uc *BookUseCase) FindBookByID(c *fiber.Ctx) error {
 
 // UpdateBook updates an existing book by ID
 func (uc *BookUseCase) UpdateBook(c *fiber.Ctx) error {
-	id := c.Params("id")
+	id := c.Params("bookID")
 
 	var req *bookModel.UpdateRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -296,7 +299,7 @@ func (uc *BookUseCase) UpdateBook(c *fiber.Ctx) error {
 
 // DeleteBook deletes a book by ID
 func (uc *BookUseCase) DeleteBook(c *fiber.Ctx) error {
-	id := c.Params("id")
+	id := c.Params("bookID")
 	if err := uc.BookRepo.DeleteBook(id); err != nil {
 		return utils.ErrorResponse(c, err.Error(), fiber.StatusInternalServerError)
 	}

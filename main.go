@@ -60,10 +60,11 @@ func main() {
 		middleware.AuthMiddleware(config.JWTSecret),
 		bookUseCase.GetAllBooks)
 	app.Post("/api/v1/books", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.StoreBook)
-	app.Get("/api/v1/book/:id", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.FindBookByID)
-	app.Patch("/api/v1/book/:id", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.UpdateBook)
-	app.Delete("/api/v1/book/:id", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.DeleteBook)
-	// app.Post("/api/v1/book/borrow/:id", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.BorrowBook)
+	app.Get("/api/v1/book/:bookID", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.FindBookByID)
+	app.Patch("/api/v1/book/:bookID", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.UpdateBook)
+	app.Delete("/api/v1/book/:bookID", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.DeleteBook)
+	app.Post("/api/v1/book/:bookID/borrow", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.BorrowBook)
+	app.Delete("/api/v1/book/:borrowID/return", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.ReturnBook)
 
 	// Listen Server
 	logger.Info("Server started on http://localhost:8081")

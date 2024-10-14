@@ -19,14 +19,27 @@ func (repo *BookRepository) CreateBook(book *entity.Book) error {
 	return repo.DB.Create(book).Error
 }
 
-func (repo *BookRepository) BorrowBook(borrowRequest *borrowModel.BorrowRequest) error {
+func (repo *BookRepository) GetBorrowedBook(id string, borrowRequest *borrowModel.BorrowRequest) error {
 	var borrow entity.Borrow
-	err := repo.DB.First(&borrow, borrowRequest).Error
+	err := repo.DB.Model(&borrow).Where("user_id = ?", id).Where("book_id = ?", borrow.ID).Error
 	return err
 }
 
 func (r *BookRepository) CreateBorrow(borrow *entity.Borrow) error {
     return r.DB.Create(borrow).Error
+}
+
+func (r *BookRepository) ReturnBook(id string) error {
+    result := r.DB.Where("id = ?", id).Delete(&entity.Borrow{})
+    if result.Error != nil {
+        return result.Error
+    }
+
+    if result.RowsAffected == 0 {
+        return utils.ErrRecordNotFound
+    }
+
+    return nil
 }
 
 func (repo *BookRepository) GetAllBooks() ([]*entity.Book, error) {
@@ -64,7 +77,8 @@ func (r *BookRepository) CreateBorrowTx(tx *gorm.DB, borrow *entity.Borrow) erro
 }
 
 func (repo *BookRepository) UpdateBook(book *entity.Book) error {
-	return repo.DB.Model(&book).Where("id = ?", book.ID).Updates(book).Error
+    // using db.Save() will help to enforce changes to default value
+	return repo.DB.Model(&book).Where("id = ?", book.ID).Updates(book).Save(book).Error
 }
 
 func (repo *BookRepository) DeleteBook(id string) error {
