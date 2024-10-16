@@ -22,10 +22,9 @@ func NewBorrowUseCase(borroRepo *repository.BorrowRepository, log *log.Logger) *
 }
 
 // BorrowBook handles the logic to borrow a book
-func (uc *BorrowUseCase) CreateBorrow(req *borrowModel.BorrowRequest) (*entity.Borrow, error) {	
+func (uc *BorrowUseCase) CreateBorrow(email string, req *borrowModel.BorrowRequest) (*entity.Borrow, error) {	
 	// Check if the user exists
-	var user *entity.User
-	user, err := uc.UserRepo.FindByID(req.UserID, user)
+	user, err := uc.UserRepo.FindByEmail(email)
 	if err != nil {
 		return nil, utils.ErrInvalidUser
 	}
@@ -35,16 +34,11 @@ func (uc *BorrowUseCase) CreateBorrow(req *borrowModel.BorrowRequest) (*entity.B
 	if err != nil {
 		return nil, utils.ErrBookNotFound
 	}
-
-	// Check if the book is available
-	if book.Borrows != nil {
-		return nil, utils.ErrBookAlreadyBorrowed
-	}
 	
 	// Create a new borrow record
 	borrow := &entity.Borrow{
 		ID:         utils.GenUUID(),
-		UserID:     req.UserID,
+		UserID:     user.ID,
 		BookID:     req.BookID,
 		User:   user,
 		Book:  	book,

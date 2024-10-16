@@ -32,7 +32,7 @@ func AuthMiddleware(jwtSecret string) fiber.Handler {
 		}
 
 		// If you need to pass the token claims to the next handler, you can do:
-		// c.Locals("user", token.Claims)
+		c.Locals("user", token.Claims)
 
 		return c.Next()
 	}

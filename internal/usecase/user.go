@@ -42,8 +42,7 @@ func (uc *AuthUseCase) SignUp(req *user.SignUpRequest) error {
 }
 
 func (uc *AuthUseCase) SignIn(req *user.SignInRequest) (*entity.User, error) {
-	var user entity.User
-	userFromDb, err := uc.UserRepo.FindByEmail(req.Email, &user)
+	userFromDb, err := uc.UserRepo.FindByEmail(req.Email)
 	if err != nil {
 		return nil, err
 	}

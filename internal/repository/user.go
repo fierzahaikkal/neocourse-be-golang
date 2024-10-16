@@ -57,7 +57,11 @@ func (r *UserRepository) FindByID(id string, user *entity.User) (*entity.User, e
     return user, err
 }
 
-func (r *UserRepository) FindByEmail(email string, user *entity.User) (*entity.User, error) {
+func (r *UserRepository) FindByEmail(email string) (*entity.User, error) {
+	var user entity.User
 	err := r.DB.First(&user, "email = ?", email).Error
-	return user, err
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }

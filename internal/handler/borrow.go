@@ -5,6 +5,7 @@ import (
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/usecase"
 	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -23,11 +24,15 @@ func NewBorrowHandler(borrowUC *usecase.BorrowUseCase, authUC *usecase.AuthUseCa
 func (bh *BorrowHandler) BorrowBook(c *fiber.Ctx) error {
 	var req borrowModel.BorrowRequest
 
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	email := claims["email"].(string)
+
 	if err := c.BodyParser(&req); err != nil {
 		return utils.ErrorResponse(c, "Invalid request", fiber.StatusBadRequest)
 	}
 
-	borrow, err := bh.BorrowUC.CreateBorrow(&req); 
+	borrow, err := bh.BorrowUC.CreateBorrow(email, &req); 
 	if err != nil {
 		return err
 	}

@@ -11,6 +11,7 @@ import (
 // GenerateJWT generates a JWT token for a given user
 func GenerateJWT(user *entity.User, secret string) (string, error) {
 	claims := jwt.MapClaims{
+		"id": user.ID,
 		"email": user.Email,
 		"exp":   time.Now().Add(time.Hour * 4).Unix(),
 	}
@@ -50,4 +51,22 @@ func ExtractEmailFromJWT(tokenString string) (string, error) {
 		return "", fmt.Errorf("email claim is not a string")
 	}
 	return email, nil
+}
+
+func ExtractIDFromJWT(tokenString string) (string, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return []byte("secret"), nil // Use your secret key here
+	})
+	if err != nil {
+		return "", err
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return "", fmt.Errorf("invalid token")
+	}
+	id, ok := claims["id"].(string)
+	if !ok {
+		return "", fmt.Errorf("email claim is not a string")
+	}
+	return id, nil
 }
