@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
 	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils"
 	log "github.com/sirupsen/logrus"
@@ -46,20 +48,14 @@ func (r *UserRepository) Register(user *entity.User) error {
 
 func (r *UserRepository) FindByID(id string, user *entity.User) (*entity.User, error) {
     err := r.DB.First(&user, "id = ?", id).Error
-    return user, err
-}
-
-func (r *UserRepository) FindByIDTx(tx *gorm.DB, id string) (*entity.User, error) {
-    var user entity.User
-    if err := tx.First(&user, "id = ?", id).Error; err != nil {
-        if err == gorm.ErrRecordNotFound {
-            return nil, nil
+    if err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            return nil, utils.ErrRecordNotFound
         }
         return nil, err
     }
-    return &user, nil
+    return user, err
 }
-
 
 func (r *UserRepository) FindByEmail(email string, user *entity.User) (*entity.User, error) {
 	err := r.DB.First(&user, "email = ?", email).Error

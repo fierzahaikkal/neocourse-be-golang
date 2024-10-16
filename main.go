@@ -41,30 +41,38 @@ func main() {
 
 	// repositories
 	bookRepo := repository.NewBookRepository(dbConn)
+	borrowRepo := repository.NewBorrowRepository(dbConn)
 	userRepo := repository.NewUserRepository(dbConn, logger)
 
 	// usecases
-	bookUseCase := usecase.NewBookUseCase(bookRepo)
+	bookUseCase := usecase.NewBookUseCase(bookRepo, logger)
+	borrowUseCase := usecase.NewBorrowUseCase(borrowRepo, logger)
 	authUseCase := usecase.NewAuthUseCase(userRepo, logger)
 
 	// handlers
 	authHandler := handler.NewAuthHandler(authUseCase, config.JWTSecret, logger)
+	bookHandler := handler.NewBookHandler(bookUseCase, authUseCase, borrowUseCase, logger)
+	borrowHandler := handler.NewBorrowHandler(borrowUseCase, authUseCase, bookUseCase, logger)
 
 	// routes
 	// auth
 	app.Post("/api/v1/auth/signup", authHandler.SignUp)
 	app.Post("/api/v1/auth/signin", authHandler.SignIn)
+	app.Get("/api/v1/user/:userID", middleware.AuthMiddleware(config.JWTSecret), authHandler.GetUser)
 
 	// books
 	app.Get("/api/v1/books",
 		middleware.AuthMiddleware(config.JWTSecret),
-		bookUseCase.GetAllBooks)
-	app.Post("/api/v1/books", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.StoreBook)
-	app.Get("/api/v1/book/:bookID", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.FindBookByID)
-	app.Patch("/api/v1/book/:bookID", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.UpdateBook)
-	app.Delete("/api/v1/book/:bookID", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.DeleteBook)
-	app.Post("/api/v1/book/:bookID/borrow", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.BorrowBook)
-	app.Delete("/api/v1/book/:borrowID/return", middleware.AuthMiddleware(config.JWTSecret), bookUseCase.ReturnBook)
+		bookHandler.GetAllBooks)
+	app.Post("/api/v1/books", middleware.AuthMiddleware(config.JWTSecret), bookHandler.StoreBook)
+	app.Get("/api/v1/book/:bookID", middleware.AuthMiddleware(config.JWTSecret), bookHandler.FindBookByID)
+	app.Patch("/api/v1/book/:bookID", middleware.AuthMiddleware(config.JWTSecret), bookHandler.UpdateBook)
+	app.Delete("/api/v1/book/:bookID", middleware.AuthMiddleware(config.JWTSecret), bookHandler.DeleteBook)
+
+	//borrow
+	app.Get("/api/v1/user/:userID/borrow", middleware.AuthMiddleware(config.JWTSecret), borrowHandler.GetUserBorrowedBooks)
+	app.Post("/api/v1/book/borrow", middleware.AuthMiddleware(config.JWTSecret), borrowHandler.BorrowBook)
+	app.Delete("/api/v1/book/:bookID/return", middleware.AuthMiddleware(config.JWTSecret), borrowHandler.ReturnBorrowedBook)
 
 	// Listen Server
 	logger.Info("Server started on http://localhost:8081")

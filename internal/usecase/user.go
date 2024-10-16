@@ -55,3 +55,13 @@ func (uc *AuthUseCase) SignIn(req *user.SignInRequest) (*entity.User, error) {
 
 	return userFromDb, nil
 }
+
+func (uc *AuthUseCase) GetUser(id string) (*entity.User, error) {
+	var user entity.User
+	userFromDB, err := uc.UserRepo.FindByID(id, &user)
+	if err != nil {
+		return nil, err
+	}
+
+	return userFromDB, nil
+}

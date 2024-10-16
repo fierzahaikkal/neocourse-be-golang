@@ -1,9 +1,9 @@
 package handler
 
 import (
+	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/model/user"
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/usecase"
-	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
 	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -63,5 +63,17 @@ func (ah *AuthHandler) SignIn(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to generate token"})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"token": token})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"data": userFromDb,"token": token})
+}
+
+func (ah *AuthHandler) GetUser(c *fiber.Ctx) error {
+	id := c.Params("userID")
+
+	user, err := ah.AuthUC.GetUser(id)
+
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "User not found"})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"data": user})
 }

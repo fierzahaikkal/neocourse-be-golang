@@ -1,5 +1,6 @@
 package borrow
 
 type BorrowRequest struct {
-	BorrowedBy 	string   `json:"borrowed_by"`
+	UserID 	string   `json:"user_id"`
+	BookID string `json:"book_id"`
 }

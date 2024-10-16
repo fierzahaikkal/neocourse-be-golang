@@ -9,7 +9,7 @@ type BookStoreRequest struct{
 	Year        int    `json:"year"`
 }
 
-type UpdateRequest struct {
+type UpdateBookRequest struct {
 	Author      *string `json:"author"`
 	Title       *string `json:"title"`
 	Description *string `json:"description"`
@@ -18,6 +18,11 @@ type UpdateRequest struct {
 	ImageURI    *string `json:"image_uri"`
 }
 
-type BookReturnRequest struct{
-	ID			string `json:"id"`
+type GetBookResponse struct {
+	Author      string `json:"author"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Year        int    `json:"year"`
+	Genre       string `json:"genre"`
+	ImageURI    string `json:"image_uri"`
 }

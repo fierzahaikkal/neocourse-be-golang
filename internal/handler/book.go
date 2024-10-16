@@ -1,87 +1,90 @@
 package handler
 
-// import (
-// 	"github.com/fierzahaikkal/neocourse-be-golang/internal/usecase"
-// 	bookModel "github.com/fierzahaikkal/neocourse-be-golang/internal/model/book"
-// 	borrowModel "github.com/fierzahaikkal/neocourse-be-golang/internal/model/borrow"
-// 	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils"
-// 	"github.com/gofiber/fiber/v2"
-// )
+import (
+	bookModel "github.com/fierzahaikkal/neocourse-be-golang/internal/model/book"
+	"github.com/fierzahaikkal/neocourse-be-golang/internal/usecase"
+	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils"
+	"github.com/gofiber/fiber/v2"
+	log "github.com/sirupsen/logrus"
+)
 
-// type BookHandler struct {
-// 	BookUseCase *usecase.BookUseCase
-// }
+type BookHandler struct {
+	BookUC *usecase.BookUseCase
+	AuthUC *usecase.AuthUseCase
+	BorrowUC *usecase.BorrowUseCase
+	log	*log.Logger
+}
 
-// func NewBookHandler(bookUseCase *usecase.BookUseCase) *BookHandler {
-// 	return &BookHandler{
-// 		BookUseCase: bookUseCase,
-// 	}
-// }
+func NewBookHandler(bookUC *usecase.BookUseCase, authUC *usecase.AuthUseCase, borrowUC *usecase.BorrowUseCase, log *log.Logger) *BookHandler {
+	return &BookHandler{
+		BookUC: bookUC,
+		AuthUC: authUC,
+		BorrowUC: borrowUC,
+		log: log,
+	}
+}
 
-// func (h *BookHandler) StoreBook(c *fiber.Ctx) error {
-// 	var req bookModel.BookStoreRequest
-// 	if err := c.BodyParser(&req); err != nil {
-// 		return utils.ErrorResponse(c, err.Error(), fiber.StatusBadRequest)
-// 	}
+// StoreBook handles the logic to add a new book
+func (bh *BookHandler) StoreBook(c *fiber.Ctx) (error) {
+	var req bookModel.BookStoreRequest
+	
+	if err := c.BodyParser(&req); err != nil {
+		return utils.ErrorResponse(c, err.Error(), fiber.StatusBadRequest)
+	}
+	if req.Title == "" || req.Author == "" {
+		return  utils.ErrorResponse(c, "Book title and author is required", fiber.StatusBadRequest)
+	}	
+	book, err := bh.BookUC.StoreBook(&req); 
+	if err != nil {
+		return utils.ErrorResponse(c, err.Error(), fiber.StatusInternalServerError)
+	}
 
-// 	book, err := h.BookUseCase.StoreBook(&req)
-// 	if err != nil {
-// 		return utils.ErrorResponse(c, err.Error(), fiber.StatusInternalServerError)
-// 	}
+	return utils.SuccessResponse(c, book, fiber.StatusCreated)
+}
 
-// 	return utils.SuccessResponse(c, book, fiber.StatusCreated)
-// }
+// GetAllBooks returns all available books
+func (bh *BookHandler) GetAllBooks(c *fiber.Ctx) error {
+	book, err := bh.BookUC.GetAllBooks()
+	if err != nil {
+		return utils.ErrorResponse(c, err.Error(), fiber.StatusNotFound)
+	}
+	return utils.SuccessResponse(c, book, fiber.StatusOK)
+}
 
-// func (h *BookHandler) BorrowBook(c *fiber.Ctx) error {
-// 	var req borrowModel.BorrowRequest
-// 	if err := c.BodyParser(&req); err != nil {
-// 		return utils.ErrorResponse(c, err.Error(), fiber.StatusBadRequest)
-// 	}
+// FindBookByID returns a specific book by ID
+func (bh *BookHandler) FindBookByID(c *fiber.Ctx) error {
+	id := c.Params("bookID")
 
-// 	book, err := h.BookUseCase.BorrowBook(&req)
-// 	if err != nil {
-// 		return utils.ErrorResponse(c, err.Error(), fiber.StatusInternalServerError)
-// 	}
+	book, err := bh.BookUC.FindBookByID(id)
+	if err != nil {
+		return utils.ErrorResponse(c, err.Error(), fiber.StatusNotFound)
+	}
 
-// 	return utils.SuccessResponse(c, book, fiber.StatusAccepted)
-// }
+	return utils.SuccessResponse(c, book, fiber.StatusOK)
+}
 
-// func (h *BookHandler) ReturnBook(c *fiber.Ctx) error {
-// 	id := c.Params("id")
+// UpdateBook updates an existing book by ID
+func (bh *BookHandler) UpdateBook(c *fiber.Ctx) error {
+	id := c.Params("bookID")
 
-// 	book, err := h.BookUseCase.ReturnBook(id)
-// 	if err != nil {
-// 		return utils.ErrorResponse(c, err.Error(), fiber.StatusInternalServerError)
-// 	}
+	var req bookModel.UpdateBookRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.ErrorResponse(c, err.Error(), fiber.StatusBadRequest)
+	}
 
-// 	return utils.SuccessResponse(c, book, fiber.StatusAccepted)
-// }
+	book, err := bh.BookUC.UpdateBook(id, &req)
+	if err != nil{
+		return utils.ErrBookNotFound
+	}
 
-// func (h *BookHandler) GetAllBooks(c *fiber.Ctx) error {
-// 	books, err := h.BookUseCase.GetAllBooks()
-// 	if err != nil {
-// 		return utils.ErrorResponse(c, err.Error(), fiber.StatusInternalServerError)
-// 	}
+	return utils.SuccessResponse(c, book, fiber.StatusCreated)
+}
 
-// 	return utils.SuccessResponse(c, books, fiber.StatusOK)
-// }
-
-// func (h *BookHandler) FindBookByID(c *fiber.Ctx) error {
-// 	id := c.Params("id")
-
-// 	book, err := h.BookUseCase.FindBookByID(id)
-// 	if err != nil {
-// 		return utils.ErrorResponse(c, err.Error(), fiber.StatusNotFound)
-// 	}
-
-// 	return utils.SuccessResponse(c, book, fiber.StatusOK)
-// }
-
-// func (h *BookHandler) DeleteBook(c *fiber.Ctx) error {
-// 	id := c.Params("id")
-// 	if err := h.BookUseCase.DeleteBook(id); err != nil {
-// 		return utils.ErrorResponse(c, err.Error(), fiber.StatusInternalServerError)
-// 	}
-
-// 	return utils.SuccessResponse(c, nil, fiber.StatusNoContent)
-// }
+// DeleteBook deletes a book by ID
+func (bh *BookHandler) DeleteBook(c *fiber.Ctx) error {
+	id := c.Params("bookID")
+	if err := bh.BookUC.DeleteBook(id); err != nil {
+		return utils.ErrorResponse(c, err.Error(), fiber.StatusInternalServerError)
+	}
+	return utils.SuccessResponse(c, "Success deleted", fiber.StatusNoContent)
+}
