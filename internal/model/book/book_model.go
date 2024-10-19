@@ -24,5 +24,6 @@ type GetBookResponse struct {
 	Description string `json:"description"`
 	Year        int    `json:"year"`
 	Genre       string `json:"genre"`
+	StoredBy 	string `json:"stored_by"`
 	ImageURI    string `json:"image_uri"`
 }

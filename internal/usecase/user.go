@@ -19,10 +19,10 @@ func NewAuthUseCase(userRepo *repository.UserRepository, log *log.Logger) *AuthU
 	return &AuthUseCase{UserRepo: userRepo, log: log}
 }
 
-func (uc *AuthUseCase) SignUp(req *user.SignUpRequest) error {
+func (uc *AuthUseCase) SignUp(req *user.SignUpRequest) (*entity.User, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	user := entity.User{
@@ -35,10 +35,10 @@ func (uc *AuthUseCase) SignUp(req *user.SignUpRequest) error {
 
 	err = uc.UserRepo.Register(&user)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &user, nil
 }
 
 func (uc *AuthUseCase) SignIn(req *user.SignInRequest) (*entity.User, error) {

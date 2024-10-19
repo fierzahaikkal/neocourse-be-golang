@@ -1,8 +1,9 @@
 package usecase
 
 import (
+	"fmt"
+
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
-	borrowModel "github.com/fierzahaikkal/neocourse-be-golang/internal/model/borrow"
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/repository"
 	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils"
 	log "github.com/sirupsen/logrus"
@@ -22,27 +23,32 @@ func NewBorrowUseCase(borroRepo *repository.BorrowRepository, log *log.Logger) *
 }
 
 // BorrowBook handles the logic to borrow a book
-func (uc *BorrowUseCase) CreateBorrow(email string, req *borrowModel.BorrowRequest) (*entity.Borrow, error) {	
+func (uc *BorrowUseCase) CreateBorrow(email string, bookID string) (*entity.Borrow, error) {	
 	// Check if the user exists
 	user, err := uc.UserRepo.FindByEmail(email)
 	if err != nil {
 		return nil, utils.ErrInvalidUser
 	}
 
+	fmt.Printf("%s\n",user.ID)
+
 	// Find the book
-	book, err := uc.BookRepo.FindBookByID(req.BookID)
+	book, err := uc.BookRepo.FindBookByID(bookID)
 	if err != nil {
 		return nil, utils.ErrBookNotFound
 	}
+	fmt.Printf("%s\n",book.ID)
 	
 	// Create a new borrow record
 	borrow := &entity.Borrow{
 		ID:         utils.GenUUID(),
 		UserID:     user.ID,
-		BookID:     req.BookID,
+		BookID:     bookID,
 		User:   user,
 		Book:  	book,
 	}
+
+	fmt.Printf("%+v\n",borrow)
 
 	if err := uc.BorrowRepo.CreateBorrow(borrow); err != nil {
 		return nil, err

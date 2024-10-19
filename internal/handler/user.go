@@ -1,7 +1,8 @@
 package handler
 
 import (
-	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
+	"fmt"
+
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/model/user"
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/usecase"
 	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils"
@@ -22,13 +23,12 @@ func NewAuthHandler(authUC *usecase.AuthUseCase, jwtSecret string, log *log.Logg
 
 func (ah *AuthHandler) SignUp(c *fiber.Ctx) error {
 	var req user.SignUpRequest
-	var user entity.User
 
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	err := ah.AuthUC.SignUp(&req)
+	user, err := ah.AuthUC.SignUp(&req)
 	if err != nil {
 		if err == utils.ErrUserExists {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "User already exists"})
@@ -36,7 +36,9 @@ func (ah *AuthHandler) SignUp(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to register user"})
 	}
 
-	token, err := utils.GenerateJWT(&user, ah.JWTSecret)
+	fmt.Printf("%+v", user)
+
+	token, err := utils.GenerateJWT(user, ah.JWTSecret)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to generate token"})
 	}

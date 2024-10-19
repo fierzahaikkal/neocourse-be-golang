@@ -1,7 +1,8 @@
 package handler
 
 import (
-	borrowModel "github.com/fierzahaikkal/neocourse-be-golang/internal/model/borrow"
+	"fmt"
+
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/usecase"
 	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils"
 	"github.com/gofiber/fiber/v2"
@@ -22,20 +23,26 @@ func NewBorrowHandler(borrowUC *usecase.BorrowUseCase, authUC *usecase.AuthUseCa
 
 // BorrowBook handles the logic to borrow a book
 func (bh *BorrowHandler) BorrowBook(c *fiber.Ctx) error {
-	var req borrowModel.BorrowRequest
+	bookID := c.Params("bookID")
+	// var req borrowModel.BorrowRequest
 
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
+	claims := c.Locals("user").(jwt.MapClaims)
 	email := claims["email"].(string)
 
-	if err := c.BodyParser(&req); err != nil {
-		return utils.ErrorResponse(c, "Invalid request", fiber.StatusBadRequest)
-	}
+	// if err := c.BodyParser(&req); err != nil {
+	// 	return utils.ErrorResponse(c, "Invalid request", fiber.StatusBadRequest)
+	// }
 
-	borrow, err := bh.BorrowUC.CreateBorrow(email, &req); 
+	fmt.Printf("%s", bookID)
+	fmt.Printf("%s", email)
+
+	borrow, err := bh.BorrowUC.CreateBorrow(email, bookID); 
 	if err != nil {
+		fmt.Printf("%s", err)
 		return err
 	}
+
+	fmt.Printf("%s", err)
 	
 	return utils.SuccessResponse(c, borrow, fiber.StatusOK)
 }

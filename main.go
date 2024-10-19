@@ -71,7 +71,7 @@ func main() {
 
 	//borrow
 	app.Get("/api/v1/user/:userID/borrow", middleware.AuthMiddleware(config.JWTSecret), borrowHandler.GetUserBorrowedBooks)
-	app.Post("/api/v1/book/borrow", middleware.AuthMiddleware(config.JWTSecret), borrowHandler.BorrowBook)
+	app.Post("/api/v1/book/:bookID/borrow", middleware.AuthMiddleware(config.JWTSecret), borrowHandler.BorrowBook)
 	app.Delete("/api/v1/book/:bookID/return", middleware.AuthMiddleware(config.JWTSecret), borrowHandler.ReturnBorrowedBook)
 
 	// Listen Server

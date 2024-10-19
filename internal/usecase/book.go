@@ -25,7 +25,9 @@ func NewBookUseCase(bookRepo *repository.BookRepository, log *log.Logger) *BookU
 }
 
 // StoreBook handles the logic to add a new book
-func (uc *BookUseCase) StoreBook(req *bookModel.BookStoreRequest) (*entity.Book, error) {
+func (uc *BookUseCase) StoreBook(req *bookModel.BookStoreRequest, storedBy string) (*entity.Book, error) {
+
+	
 
 	book := entity.Book{
 		ID:          utils.GenUUID(),
@@ -34,6 +36,7 @@ func (uc *BookUseCase) StoreBook(req *bookModel.BookStoreRequest) (*entity.Book,
 		Description: req.Description,
 		Year:        req.Year,
 		Genre:       req.Genre,
+		StoredBy:    storedBy,
 		ImageURI:    req.ImageURI,
 	}
 

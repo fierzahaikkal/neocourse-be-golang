@@ -5,6 +5,7 @@ import (
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/usecase"
 	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -27,6 +28,9 @@ func NewBookHandler(bookUC *usecase.BookUseCase, authUC *usecase.AuthUseCase, bo
 // StoreBook handles the logic to add a new book
 func (bh *BookHandler) StoreBook(c *fiber.Ctx) (error) {
 	var req bookModel.BookStoreRequest
+
+	claims := c.Locals("user").(jwt.MapClaims)
+	storedBy := claims["id"].(string)
 	
 	if err := c.BodyParser(&req); err != nil {
 		return utils.ErrorResponse(c, err.Error(), fiber.StatusBadRequest)
@@ -34,7 +38,7 @@ func (bh *BookHandler) StoreBook(c *fiber.Ctx) (error) {
 	if req.Title == "" || req.Author == "" {
 		return  utils.ErrorResponse(c, "Book title and author is required", fiber.StatusBadRequest)
 	}	
-	book, err := bh.BookUC.StoreBook(&req); 
+	book, err := bh.BookUC.StoreBook(&req, storedBy); 
 	if err != nil {
 		return utils.ErrorResponse(c, err.Error(), fiber.StatusInternalServerError)
 	}
