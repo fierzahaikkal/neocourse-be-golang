@@ -23,38 +23,21 @@ func NewBorrowUseCase(borroRepo *repository.BorrowRepository, log *log.Logger) *
 }
 
 // BorrowBook handles the logic to borrow a book
-func (uc *BorrowUseCase) CreateBorrow(email string, bookID string) (*entity.Borrow, error) {	
-	// Check if the user exists
-	user, err := uc.UserRepo.FindByEmail(email)
-	if err != nil {
-		return nil, utils.ErrInvalidUser
-	}
-
-	fmt.Printf("%s\n",user.ID)
-
-	// Find the book
-	book, err := uc.BookRepo.FindBookByID(bookID)
-	if err != nil {
-		return nil, utils.ErrBookNotFound
-	}
-	fmt.Printf("%s\n",book.ID)
-	
+func (uc *BorrowUseCase) CreateBorrow(userID string, bookID string) (*entity.Borrow, error) {	
 	// Create a new borrow record
-	borrow := &entity.Borrow{
+	borrow := entity.Borrow{
 		ID:         utils.GenUUID(),
-		UserID:     user.ID,
+		UserID:     userID,
 		BookID:     bookID,
-		User:   user,
-		Book:  	book,
 	}
 
 	fmt.Printf("%+v\n",borrow)
 
-	if err := uc.BorrowRepo.CreateBorrow(borrow); err != nil {
+	if err := uc.BorrowRepo.CreateBorrow(&borrow); err != nil {
 		return nil, err
 	}
 	
-	return borrow, nil
+	return &borrow, nil
 }
 
 // ReturnBook handles the logic to returning a borrowed book

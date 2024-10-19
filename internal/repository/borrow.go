@@ -21,11 +21,12 @@ func (repo *BorrowRepository) GetBorrowedBook(userID string) ([]*entity.Borrow, 
 }
 
 func (r *BorrowRepository) CreateBorrow(borrow *entity.Borrow) error {
-    if err := r.DB.Create(borrow).Error; err != nil {
-        return err
-    }
-    // Preload User and Book data
-    return r.DB.Preload("User").Preload("Book").First(borrow, borrow.ID).Error
+    // if err := r.DB.Create(borrow).Error; err != nil {
+    //     return err
+    // }
+    // // Preload User and Book data
+    // return r.DB.Preload("User").Preload("Book").First(borrow, borrow.ID).Error
+    return r.DB.Create(borrow).Error;
 }
 
 func (repo *BorrowRepository) AddBorrower(book *entity.Book) error {

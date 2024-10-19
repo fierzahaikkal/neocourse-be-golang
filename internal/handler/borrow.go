@@ -27,16 +27,30 @@ func (bh *BorrowHandler) BorrowBook(c *fiber.Ctx) error {
 	// var req borrowModel.BorrowRequest
 
 	claims := c.Locals("user").(jwt.MapClaims)
-	email := claims["email"].(string)
+	userID := claims["id"].(string)
 
 	// if err := c.BodyParser(&req); err != nil {
 	// 	return utils.ErrorResponse(c, "Invalid request", fiber.StatusBadRequest)
 	// }
 
 	fmt.Printf("%s", bookID)
-	fmt.Printf("%s", email)
+	fmt.Printf("%s", userID)
 
-	borrow, err := bh.BorrowUC.CreateBorrow(email, bookID); 
+	// Check if the user exists
+	fmt.Printf("masih ada")
+	// Find the book
+	bookFromDB, err := bh.BookUC.FindBookByID(bookID)
+	if err != nil {
+		return utils.ErrBookNotFound
+	}
+	fmt.Printf("%+v\n",&bookFromDB.ID)
+
+	// bookFromDB.Available = false
+
+	bh.BookUC.UpdateAvailable(bookID);
+
+	borrow, err := bh.BorrowUC.CreateBorrow(userID, bookID); 
+	fmt.Printf("%+v", borrow)
 	if err != nil {
 		fmt.Printf("%s", err)
 		return err

@@ -27,8 +27,6 @@ func NewBookUseCase(bookRepo *repository.BookRepository, log *log.Logger) *BookU
 // StoreBook handles the logic to add a new book
 func (uc *BookUseCase) StoreBook(req *bookModel.BookStoreRequest, storedBy string) (*entity.Book, error) {
 
-	
-
 	book := entity.Book{
 		ID:          utils.GenUUID(),
 		Author:      req.Author,
@@ -108,5 +106,29 @@ func (uc *BookUseCase) DeleteBook(id string) (error) {
 	if err := uc.BookRepo.DeleteBook(id); err != nil {
 		return err
 	}
+	return nil
+}
+
+func(uc *BookUseCase) UpdateAvailable(id string) error{
+	bookFromDB, err := uc.BookRepo.FindBookByID(id);
+	if err != nil {
+		return utils.ErrBookNotFound
+	}
+
+	bookFromDB.Available = false
+
+	uc.BookRepo.UpdateBook(bookFromDB)
+	return nil
+}
+
+func(uc *BookUseCase) UpdateAvail(id string) error{
+	bookFromDB, err := uc.BookRepo.FindBookByID(id);
+	if err != nil {
+		return utils.ErrBookNotFound
+	}
+
+	bookFromDB.Available = false
+
+	uc.BookRepo.UpdateBook(bookFromDB)
 	return nil
 }
