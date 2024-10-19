@@ -81,5 +81,5 @@ func (bh *BorrowHandler) GetUserBorrowedBooks(c *fiber.Ctx) error{
 	if err != nil {
 		return utils.ErrorResponse(c, err.Error(), fiber.StatusInternalServerError)
 	}
-	return utils.SuccessResponse(c, borrow, fiber.StatusNoContent)
+	return utils.SuccessResponse(c, borrow, fiber.StatusOK)
 }

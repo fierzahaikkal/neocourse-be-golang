@@ -23,7 +23,8 @@ func NewBorrowUseCase(borroRepo *repository.BorrowRepository, log *log.Logger) *
 }
 
 // BorrowBook handles the logic to borrow a book
-func (uc *BorrowUseCase) CreateBorrow(userID string, bookID string) (*entity.Borrow, error) {	
+func (uc *BorrowUseCase) CreateBorrow(userID string, bookID string) (*entity.Borrow, error) {
+	
 	// Create a new borrow record
 	borrow := entity.Borrow{
 		ID:         utils.GenUUID(),

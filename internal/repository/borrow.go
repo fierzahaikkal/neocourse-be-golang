@@ -16,7 +16,7 @@ func NewBorrowRepository(db *gorm.DB) *BorrowRepository {
 
 func (repo *BorrowRepository) GetBorrowedBook(userID string) ([]*entity.Borrow, error) {
 	var borrow []*entity.Borrow
-	err := repo.DB.Model(&borrow).Where("user_id = ?", userID).Error
+	err := repo.DB.Model(&borrow).Where("user_id = ?", userID).Find(&borrow).Error
 	return borrow, err
 }
 
