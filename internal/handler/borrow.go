@@ -24,20 +24,15 @@ func NewBorrowHandler(borrowUC *usecase.BorrowUseCase, authUC *usecase.AuthUseCa
 // BorrowBook handles the logic to borrow a book
 func (bh *BorrowHandler) BorrowBook(c *fiber.Ctx) error {
 	bookID := c.Params("bookID")
-	// var req borrowModel.BorrowRequest
 
 	claims := c.Locals("user").(jwt.MapClaims)
 	userID := claims["id"].(string)
 
-	// if err := c.BodyParser(&req); err != nil {
-	// 	return utils.ErrorResponse(c, "Invalid request", fiber.StatusBadRequest)
-	// }
+	userFromDB, err := bh.AuthUC.UserRepo.FindByID(userID)
+	if err != nil {
+		return utils.ErrInvalidUser
+	}
 
-	fmt.Printf("%s", bookID)
-	fmt.Printf("%s", userID)
-
-	// Check if the user exists
-	fmt.Printf("masih ada")
 	// Find the book
 	bookFromDB, err := bh.BookUC.FindBookByID(bookID)
 	if err != nil {
@@ -45,18 +40,18 @@ func (bh *BorrowHandler) BorrowBook(c *fiber.Ctx) error {
 	}
 	fmt.Printf("%+v\n",&bookFromDB.ID)
 
-	// bookFromDB.Available = false
-
-	bh.BookUC.UpdateAvailable(bookID);
-
-	borrow, err := bh.BorrowUC.CreateBorrow(userID, bookID); 
+	borrow, err := bh.BorrowUC.CreateBorrow(userFromDB, bookFromDB); 
 	fmt.Printf("%+v", borrow)
 	if err != nil {
 		fmt.Printf("%s", err)
 		return err
 	}
 
-	fmt.Printf("%s", err)
+	bookFromDB.Available = false
+	bookFromDB.Borrow = borrow
+	bh.BookUC.BookRepo.UpdateBook(bookFromDB)
+
+	// bh.BookUC.UpdateAvailable(bookID);
 	
 	return utils.SuccessResponse(c, borrow, fiber.StatusOK)
 }
@@ -65,6 +60,11 @@ func (bh *BorrowHandler) BorrowBook(c *fiber.Ctx) error {
 func (bh *BorrowHandler) ReturnBorrowedBook(c *fiber.Ctx) error{
 	id := c.Params("bookID")
 
+	bookFromDB, err := bh.BookUC.FindBookByID(id)
+	if err != nil {
+		return utils.ErrBookNotFound
+	}
+
 	if err := bh.BorrowUC.ReturnBorrowedBook(id); err != nil {
 		if err == utils.ErrRecordNotFound{
 			return utils.ErrorResponse(c, err.Error(), fiber.StatusNotFound)
@@ -72,7 +72,10 @@ func (bh *BorrowHandler) ReturnBorrowedBook(c *fiber.Ctx) error{
 		return utils.ErrorResponse(c, err.Error(), fiber.StatusInternalServerError)
 	}
 
-	return utils.SuccessResponse(c, "Success returned", fiber.StatusNoContent)
+	bookFromDB.Available = true 
+	bh.BookUC.BookRepo.UpdateBook(bookFromDB)
+
+	return utils.SuccessResponse(c, "Success returned", fiber.StatusOK)
 }
 
 func (bh *BorrowHandler) GetUserBorrowedBooks(c *fiber.Ctx) error{

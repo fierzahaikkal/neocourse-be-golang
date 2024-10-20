@@ -72,7 +72,7 @@ func (uc *BookUseCase) UpdateBook(id string, req *bookModel.UpdateBookRequest) (
 		return nil, err
 	}
 
-	if book.Borrows != nil {
+	if book.Borrow != nil {
 		return nil, err
 	}
 

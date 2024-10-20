@@ -56,8 +56,7 @@ func (uc *AuthUseCase) SignIn(req *user.SignInRequest) (*entity.User, error) {
 }
 
 func (uc *AuthUseCase) GetUser(id string) (*entity.User, error) {
-	var user entity.User
-	userFromDB, err := uc.UserRepo.FindByID(id, &user)
+	userFromDB, err := uc.UserRepo.FindByID(id)
 	if err != nil {
 		return nil, err
 	}

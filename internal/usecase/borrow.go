@@ -1,8 +1,6 @@
 package usecase
 
 import (
-	"fmt"
-
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/entity"
 	"github.com/fierzahaikkal/neocourse-be-golang/internal/repository"
 	"github.com/fierzahaikkal/neocourse-be-golang/pkg/utils"
@@ -23,16 +21,16 @@ func NewBorrowUseCase(borroRepo *repository.BorrowRepository, log *log.Logger) *
 }
 
 // BorrowBook handles the logic to borrow a book
-func (uc *BorrowUseCase) CreateBorrow(userID string, bookID string) (*entity.Borrow, error) {
+func (uc *BorrowUseCase) CreateBorrow(user *entity.User, book *entity.Book) (*entity.Borrow, error) {
 	
 	// Create a new borrow record
 	borrow := entity.Borrow{
 		ID:         utils.GenUUID(),
-		UserID:     userID,
-		BookID:     bookID,
+		UserID:     user.ID,
+		BookID:     book.ID,
+		// User: user,
+		// Book: book,
 	}
-
-	fmt.Printf("%+v\n",borrow)
 
 	if err := uc.BorrowRepo.CreateBorrow(&borrow); err != nil {
 		return nil, err

@@ -46,7 +46,8 @@ func (r *UserRepository) Register(user *entity.User) error {
 	return nil
 }
 
-func (r *UserRepository) FindByID(id string, user *entity.User) (*entity.User, error) {
+func (r *UserRepository) FindByID(id string) (*entity.User, error) {
+	var user *entity.User
     err := r.DB.First(&user, "id = ?", id).Error
     if err != nil {
         if errors.Is(err, gorm.ErrRecordNotFound) {
